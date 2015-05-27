@@ -229,44 +229,6 @@ public class App {
 		return Integer.parseInt(floorPrice.substring(0, floorPrice.indexOf(",")));
 	}
 
-	public static void processMessage() throws ShutdownSignalException,	ConsumerCancelledException, InterruptedException {
-		QueueingConsumer.Delivery delivery = consumerSent.nextDelivery();
-		String message = new String(delivery.getBody());
-		System.out.println(message);
-		SendOrder order = null;
-		try {
-			order = mapper.readValue(message, SendOrder.class);
-			String acc = order.getAccount();
-			String orderId = order.getOrderId();
-			
-			// if (acc.equals("0001041716"))
-			{
-				char side = Integer.toString(order.getSide()).charAt(0);
-				int type = order.getType();
-				String OrsType = "LO";
-				if (type == 1)	OrsType = "MP";
-				String symbol = order.getSymbol();
-				double price = order.getPrice();
-				double quantity = order.getQty();
-				String account = "0001210287";
-			    try {
-						Report report = orderService.executePlaceOrder(account,side, OrsType, symbol, price,quantity);
-						String order_id_return = report.getMessage();
-						System.out.println("Print order id: " + order_id_return);
-
-					} catch (OrderException e) {
-						e.printStackTrace();
-					}
-			}
-		}catch (JsonGenerationException e) {
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	public static void processMessageSent() throws ShutdownSignalException,
 			ConsumerCancelledException, InterruptedException {
 		QueueingConsumer.Delivery delivery = consumerSent.nextDelivery();
