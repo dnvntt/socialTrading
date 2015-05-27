@@ -1,8 +1,6 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.sql.DriverManager;
@@ -172,7 +170,7 @@ public class App {
 
 			rs.close();
 			stmt.close();
-			connection.close();
+			//connection.close();
 
 		} catch (Exception e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
@@ -282,10 +280,11 @@ public class App {
 			order = mapper.readValue(message, SendOrder.class);
 			String acc = order.getAccount();
 			String orderId = order.getOrderId();
-			OrderPendingList.add(orderId);
 
 			// if (acc.equals("0001041716"))
 			if (mapOfTrader.containsKey(acc)) {
+				OrderPendingList.add(orderId);
+				
 				List<Followee> listOfFollowee = mapOfTrader.get(acc);
 				List<String> listOfOrderFollow = new ArrayList<String>();
 
@@ -328,21 +327,23 @@ public class App {
 
 					String account = listOfFollowee.get(i).getId().trim();
 
-					int quantityRecalculate = (int) ((percentStock
-							* listOfFollowee.get(i).getMoneyAllocate() - listOfFollowee
-							.get(i).getCurrentAllocate()) / price);
-					int round_number= quantityRecalculate/100;
-					if (round_number<1) round_number=1;
-					quantityRecalculate = round_number*100;
-					
 					try {
-						//price=11.1;  //fix gia de hack ors here 
 						price = getFloorPrice(symbol); 
 						Report report;
 						if(side=='1')
+						{
+							int quantityRecalculate = (int) ((percentStock
+									* listOfFollowee.get(i).getMoneyAllocate() - listOfFollowee
+									.get(i).getCurrentAllocate()) / price);
+							int round_number= quantityRecalculate/100;
+							if (round_number<1) round_number=1;
+							quantityRecalculate = round_number*100;
+							
+							
 						report = orderService.executePlaceOrder(account,
 								side, OrsType, symbol, price,
 								quantityRecalculate);
+						}
 						else
 						{
 							int quantityOnHand = mapStockFollow.get(symbol);
@@ -449,7 +450,7 @@ public class App {
 		
 		//update orderList
 		String sql = "insert into orderlist (orderid,stock,quantity,price,date,side) VALUES ("+ order.getOrderId()+","+ order.getSymbol().trim()+","+
-		  order.getMatchedQty()+ "," + order.getMatchedPrice()+ order.getTradeDate() +","+order.getSide()+ ")";
+		  order.getMatchedQty()+ "," + order.getMatchedPrice()+  "," +order.getTradeDate() +","+order.getSide()+ ")";
 		st.executeUpdate(sql);
 		
 		//update history
