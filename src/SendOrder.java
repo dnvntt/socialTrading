@@ -33,7 +33,7 @@ public class SendOrder {
 	}
 
 	public String getOrderId() {
-		return orderId;
+		return orderId.trim();
 	}
 
 	public void setOrderId(String orderId) {
@@ -41,7 +41,7 @@ public class SendOrder {
 	}
 
 	public String getAccount() {
-		return account;
+		return account.trim();
 	}
 
 	public void setAccount(String account) {
@@ -49,7 +49,7 @@ public class SendOrder {
 	}
 
 	public String getTransactTime() {
-		return transactTime;
+		return transactTime.trim();
 	}
 
 	public void setTransactTime(String transactTime) {
@@ -65,7 +65,7 @@ public class SendOrder {
 	}
 
 	public String getSymbol() {
-		return symbol;
+		return symbol.trim();
 	}
 
 	public void setSymbol(String symbol) {
@@ -73,7 +73,7 @@ public class SendOrder {
 	}
 
 	public String getTradeDate() {
-		return tradeDate;
+		return tradeDate.trim();
 	}
 
 	public void setTradeDate(String tradeDate) {
@@ -98,7 +98,7 @@ public class SendOrder {
 
 
 	public String getEventName() {
-		return eventName;
+		return eventName.trim();
 	}
 
 	public void setEventName(String eventName) {

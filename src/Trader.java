@@ -12,7 +12,7 @@ public class Trader {
 	}
 	
 	public String getId() {
-		return id;
+		return id.trim();
 	}
 	public void setId(String id) {
 		this.id = id;
