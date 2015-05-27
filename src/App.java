@@ -63,8 +63,8 @@ public class App {
 		factory.setPassword("abcd@123");
 		Connection conn = factory.newConnection();
 
-		consumerSent = defineCosumer(QUEUE_NAME_SENT, EXCHANGE_NAME_SENT, conn);
-		consumerExecuted = defineCosumer(QUEUE_NAME_EXECUTED, EXCHANGE_NAME_EXECUTED, conn);
+		consumerSent = defineConsumer(QUEUE_NAME_SENT, EXCHANGE_NAME_SENT, conn);
+		consumerExecuted = defineConsumer(QUEUE_NAME_EXECUTED, EXCHANGE_NAME_EXECUTED, conn);
 
 		mapper = new ObjectMapper();
 		orderService = new OrderServiceImpl();
@@ -200,8 +200,8 @@ public class App {
 	}
 	
 	
-	public QueueingConsumer defineCosumer(String queueName,
-			String exchangeName, Connection conn) throws IOException {
+	public QueueingConsumer defineConsumer(String queueName,
+										   String exchangeName, Connection conn) throws IOException {
 		Channel channel = conn.createChannel();
 		channel.queueDeclare(queueName, false, false, false, null);
 		channel.queueBind(queueName, exchangeName, "");
