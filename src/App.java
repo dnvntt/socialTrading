@@ -456,7 +456,7 @@ public class App {
 		st.executeUpdate(sql);
 		
 		//update history
-	    sql = "insert into history (id ,orderid,traderid) VALUES ('"+ order.getAccount()+"','"+ orderId+ "','"+OrderPendingFollower.get(orderId) +"')";
+	    sql = "insert into history (id ,orderid,traderid,date) VALUES ('"+ order.getAccount()+"','"+ orderId+ "','"+OrderPendingFollower.get(orderId) +"',"+ order.getTradeDate()+ ")";
 	    st.executeUpdate(sql);
 		
 		if(type ==0 ){  //la trader
