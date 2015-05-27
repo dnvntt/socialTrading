@@ -280,7 +280,7 @@ public class App {
 					price = getFloorPrice(symbol);
 					SendOrder orderByThisFollower = new SendOrder();
 					orderByThisFollower.setAccount(acc);
-					orderByThisFollower.setSide(side);
+					orderByThisFollower.setSide(order.getSide());
 					orderByThisFollower.setType(order.getType());
 					orderByThisFollower.setSymbol(symbol);
 					// FIXME: Dangerous cast. Why is SendOrder.price int?;
