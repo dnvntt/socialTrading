@@ -2,10 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +47,7 @@ public class App {
 	private List<String> OrderPendingList; // list all order pending of trader and follower
 
 	public App() throws IOException {
+		// FIXME: Externalize these config values
 		String QUEUE_NAME_SENT = "sentOrderList2";
 		String EXCHANGE_NAME_SENT = "NotiCenter.Exchange.SentOrder";
 
@@ -84,14 +82,21 @@ public class App {
 
 			stmt = connection.createStatement();
 
-			String sql = "select * from (select * FROM following, account where following.id = account.id order by following.traderid asc) tb1 LEFT JOIN "
-					+ "(select transactionid, count(*) as currentopen, sum(quantity*price) as cost from transaction, orderlist where transaction.orderid = orderlist.orderid"
-					+ " GROUP BY transactionid) tb2  ON tb1.transactionid=tb2.transactionid";
+			String sql = "SELECT * FROM (SELECT * FROM following, account WHERE following.id = account.id ORDER BY following.traderid asc) tb1 LEFT JOIN "
+					+ "(SELECT transactionid, count(*) AS currentopen, sum(quantity * price) AS cost FROM transaction, orderlist WHERE transaction.orderid = orderlist.orderid"
+					+ " GROUP BY transactionid) tb2  ON tb1.transactionid = tb2.transactionid";
 
 			ResultSet rs = stmt.executeQuery(sql);
 			List<Follower> listOfFollower = new ArrayList<Follower>();
 
-			Statement stmt1 = connection.createStatement();
+			PreparedStatement stmt1 = connection.prepareStatement(
+					"SELECT stock, quantity, transaction.orderid " +
+							"FROM following, account, transaction, orderlist " +
+							"WHERE following.id = account.id" +
+							"  AND transaction.orderid = orderlist.orderid	" +
+							"  AND following.transactionid = transaction.transactionid " +
+							"  AND following.traderid = ?" +
+							"  AND account.id = ?");
 
 			while (rs.next()) {
 				String traderid = rs.getString("traderid").trim();
@@ -110,16 +115,14 @@ public class App {
 
 				Map<String, Integer> mapStockQuantityFollow = new HashMap<String, Integer>();
 				Map<String, String> mapStockOrderFollow = new HashMap<String, String>();
-				String sql1 = "select stock, quantity,transaction.orderid FROM following, account, transaction, orderlist where following.id = account.id"
-						+ " and transaction.orderid = orderlist.orderid	and following.transactionid=transaction.transactionid"
-						+ " and  following.traderid ='"
-						+ traderid
-						+ "' and account.id='" + followerId + "';";
 
-				ResultSet rs1 = stmt1.executeQuery(sql1);
+				stmt1.setString(1, traderid);
+				stmt1.setString(2, followerId);
+
+				ResultSet rs1 = stmt1.executeQuery();
 				while (rs1.next()) {
-					mapStockQuantityFollow.put(rs1.getString("stock").trim(),rs1.getInt("quantity"));
-					mapStockOrderFollow.put(rs1.getString("stock").trim(),rs1.getString("orderid"));
+					mapStockQuantityFollow.put(rs1.getString("stock").trim(), rs1.getInt("quantity"));
+					mapStockOrderFollow.put(rs1.getString("stock").trim(), rs1.getString("orderid"));
 				}
 				rs1.close();
 
@@ -138,8 +141,12 @@ public class App {
 				listOfStock.put(stock, riskFactor);
 			}
 
-			sql = "select * from trader LEFT JOIN (select id, sum(quantity*cost) as totalcost from portfolio group by id ) tb2  ON trader.traderid= tb2.id;";
+			sql = "SELECT * FROM trader " +
+					"LEFT JOIN " +
+					"(SELECT id, sum(quantity * cost) AS totalcost FROM portfolio GROUP BY id) tb2 " +
+					"ON trader.traderid = tb2.id";
 			rs = stmt.executeQuery(sql);
+
 			while (rs.next()) {
 				String traderid = rs.getString("traderid").trim();
 				int numberFollow = rs.getInt("numberfollow");
@@ -367,7 +374,7 @@ public class App {
 			if (OrderPendingList.contains(orderId)) // neu list co order quan
 													// tam thi update database
 			{ 
-				//xu ly khop lenh toan bo
+				// xu ly khop lenh toan bo
 				if(order.getMatchedQty()==order.getQty() )  //order.getSide()=='1' && 
 				{
 					if(listOfTrader.containsKey(acc))
@@ -408,27 +415,50 @@ public class App {
 		
 		Statement st = conn.createStatement();
 		
-		//update orderList
-		String sql = "insert into orderlist (orderid,stock,quantity,price,date,side) VALUES ("+ orderId+","+ order.getSymbol().trim()+","+
-		  order.getMatchedQty()+ "," + order.getMatchedPrice()+  "," +order.getTradeDate() +","+order.getSide()+ ")";
-		st.executeUpdate(sql);
+		// update orderList
+		PreparedStatement orderListUpdateSt = conn.prepareStatement(
+				"INSERT INTO orderlist (orderid, stock, quantity, price, date, side) VALUES (?, ?, ?, ?, ?, ?)");
+		orderListUpdateSt.setString(1, orderId);
+		orderListUpdateSt.setString(2, order.getSymbol());
+		orderListUpdateSt.setInt(3, order.getMatchedQty());
+		orderListUpdateSt.setInt(4, order.getMatchedPrice());
+		orderListUpdateSt.setString(5, order.getTradeDate());
+		orderListUpdateSt.setInt(6, order.getSide());
+		orderListUpdateSt.executeUpdate();
 		
-		//update history
-	    sql = "insert into history (id ,orderid,traderid,date) VALUES ('"+ order.getAccount()+"','"+ orderId+ "','"+OrderPendingFollower.get(orderId) +"',"+ order.getTradeDate()+ ")";
-	    st.executeUpdate(sql);
+		// update history
+		PreparedStatement historyUpdateSt = conn.prepareStatement(
+				"insert into history (id, orderid, traderid, date) VALUES (?, ?, ?, ?)");
+		historyUpdateSt.setString(1, order.getAccount());
+		historyUpdateSt.setString(2, orderId);
+		historyUpdateSt.setString(3, OrderPendingFollower.get(orderId));
+		historyUpdateSt.setString(4, order.getTradeDate());
+	    historyUpdateSt.executeUpdate();
 		
-		if(type ==0 ){  //la trader
-			//update portfolio
-			if(order.getSide()=='1')
-			 sql = "update trader set cash = "+ (listOfTrader.get(acc).getCash() - quantity*price) +" where traderid='"+ acc + "'; ";
-			else
-				sql = "update trader set cash = "+ (listOfTrader.get(acc).getCash() + quantity*price) +" where traderid='"+ acc + "'; ";
-			 st.executeUpdate(sql);
-		}
-		else //la follower
-		{
-		    sql = "select * from account, following where id ='"+acc+"' and account.id = following.id and following.traderid ='"+ OrderPendingFollower.get(acc) +"';" ;
-		    ResultSet rs = st.executeQuery(sql);
+		if (type == 0 ) {  // la trader
+			// update portfolio
+			PreparedStatement portfolioUpdateSt = conn.prepareStatement(
+					"UPDATE trader SET cash = ? WHERE traderid = ?");
+
+			if (order.getSide() == '1') {
+				portfolioUpdateSt.setFloat(1, listOfTrader.get(acc).getCash() - quantity * price);
+			} else {
+				portfolioUpdateSt.setFloat(1, listOfTrader.get(acc).getCash() + quantity * price);
+			}
+
+			portfolioUpdateSt.setString(2, acc);
+			portfolioUpdateSt.executeUpdate();
+		} else { // la follower
+			PreparedStatement getFolloweesQuery = conn.prepareStatement(
+					"SELECT * from account, following " +
+							"WHERE id = ? " +
+							"AND account.id = following.id " +
+							"AND following.traderid = ?");
+
+			getFolloweesQuery.setString(1, acc);
+			getFolloweesQuery.setString(2, OrderPendingFollower.get(acc));
+		    ResultSet rs = getFolloweesQuery.executeQuery();
+
 		    int cash = 0;
 		    String transactionid = "";
 		    
@@ -438,29 +468,44 @@ public class App {
 			}
 			rs.close();
 			
-			//update portfolio
-			if(order.getSide()=='1')
-				sql = "update account set cash = "+ (cash - quantity*price) +" where id='"+ acc + "'; ";
+			// update portfolio
+			PreparedStatement portfolioUpdateSt = conn.prepareStatement(
+					"UPDATE account SET cash = ? WHERE id = ?");
+			portfolioUpdateSt.setString(2, acc);
+
+			if (order.getSide() == '1')
+				portfolioUpdateSt.setFloat(1, cash - quantity * price);
 			else
-				sql = "update account set cash = "+ (cash + quantity*price) +" where id='"+ acc + "'; ";
-			st.executeUpdate(sql);
-			
-		   //update transaction
-		    if(order.getSide()=='1')  {
-		    	sql = "insert into transaction (transactionid, orderid) VALUES ('"+ transactionid +"','"+ orderId + "'; ";
-		    	st.executeUpdate(sql);
-		    }
-		    else{
-		    	sql = "select transaction.orderid from transaction, orderlist where transactionid='"+transactionid +
-		    			"' and transaction.orderid =orderlist.orderid and  orderlist.stock='"+ order.getSymbol().trim()+"';";
-		    	rs = st.executeQuery(sql);
-		    	String orderIdDelete = null;
-		    	 while (rs.next()) {
-		    		 orderIdDelete=  rs.getString("orderid").trim();
-		    	 }
-		    	 
-		    	sql = "delete from transaction where  orderid='"+  orderIdDelete + "'; ";
-		    	st.executeUpdate(sql);
+				portfolioUpdateSt.setFloat(1, cash + quantity * price);
+
+			portfolioUpdateSt.executeUpdate();
+
+		    // update transaction
+		    if (order.getSide() == '1')  {
+				PreparedStatement insertTransactionSt = conn.prepareStatement(
+						"INSERT INTO transaction (transactionid, orderid) VALUES (?, ?)");
+				insertTransactionSt.setString(1, transactionid);
+				insertTransactionSt.setString(2, orderId);
+				insertTransactionSt.executeUpdate();
+		    } else {
+				PreparedStatement findTransactionToDelete = conn.prepareStatement(
+						"SELECT transaction.orderid FROM transaction, orderlist " +
+								"WHERE transactionid = ? " +
+								"AND transaction.orderid = orderlist.orderid " +
+								"AND orderlist.stock = ?");
+				findTransactionToDelete.setString(1, transactionid);
+				findTransactionToDelete.setString(2, order.getSymbol());
+		    	rs = findTransactionToDelete.executeQuery();
+
+		    	String orderIdToDelete = null;
+		    	while (rs.next()) {
+					orderIdToDelete = rs.getString("orderid").trim();
+		    	}
+
+				PreparedStatement removeTransactionSt = conn.prepareStatement(
+						"DELETE FROM transaction WHERE orderid = ?");
+				removeTransactionSt.setString(1, orderIdToDelete);
+				removeTransactionSt.executeUpdate();
 		    }
 		}
 		
