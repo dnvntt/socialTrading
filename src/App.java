@@ -260,7 +260,7 @@ public class App {
 
 			// For each follower, duplicate the order made by the trader, with some necessary adjustments
 			for (Follower f : listOfFollower) {
-				// check followee neu Riskfactor < riskfactor cua ma CK can
+				// check follower neu Riskfactor < riskfactor cua ma CK can
 				// mua thi bo qua
 				// FIXME Needs test
 				if (side == '1'	&& f.getRiskfactor() < stockrisk)
@@ -323,6 +323,7 @@ public class App {
 		String message = new String(delivery.getBody());
 		System.out.println(message);
 		SendOrder order = null;
+
 		try {
 			order = mapper.readValue(message, SendOrder.class);
 			List<SendOrder> followerOrders = replicateOrderForFollowers(order);
