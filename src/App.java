@@ -229,6 +229,100 @@ public class App {
 		return Integer.parseInt(floorPrice.substring(0, floorPrice.indexOf(",")));
 	}
 
+	public static void processSendOrder(SendOrder order) {
+		String acc = order.getAccount();
+		String orderId = order.getOrderId();
+
+		// if (acc.equals("0001041716"))
+		if (mapOfTrader.containsKey(acc)) {
+			OrderPendingList.add(orderId);
+
+			List<Follower> listOfFollowee = mapOfTrader.get(acc);
+			List<String> listOfOrderFollow = new ArrayList<String>();
+
+			if (!OrderPendingMap.containsKey(orderId))
+				OrderPendingMap.put(orderId, listOfOrderFollow);
+
+			char side = Integer.toString(order.getSide()).charAt(0);
+			int type = order.getType();
+			String OrsType = "LO";
+			if (type == 1)
+				OrsType = "MP";
+			String symbol = order.getSymbol();
+			double price = order.getPrice();
+			double quantity = order.getQty();
+			int stockrisk = listOfStock.get(symbol);
+			Trader myTrader = listOfTrader.get(acc);
+
+			double percentStock = (myTrader.getStockOnhandValue() + price
+					* quantity)
+					/ (myTrader.getStockOnhandValue() + myTrader.getCash());
+
+			for (int i = 0; i < listOfFollowee.size(); i++) {
+				// check follower neu Riskfactor < riskfactor cua ma CK can
+				// mua thi bo qua
+				if (side == '1'	&& listOfFollowee.get(i).getRiskfactor() < stockrisk)
+					continue;
+
+				// check follower neu da mua nhieu hon muc cho phep thi bo
+				// qua
+				if (side == '1'	&& listOfFollowee.get(i).getMaxopen() <= listOfFollowee.get(i).getCurrentOpen())
+					continue;
+				Map<String, Integer> mapStockFollow = null;
+				if (side == '2') // lenh ban, check followee neu khong co CK
+				// thi bo qua
+				{
+					mapStockFollow = listOfFollowee.get(i).getMapStockFollow();
+					if (!mapStockFollow.containsKey(symbol))
+						continue;
+				}
+
+				String account = listOfFollowee.get(i).getId().trim();
+
+				try {
+					price = getFloorPrice(symbol);
+					Report report;
+					if(side=='1')
+					{
+						int quantityRecalculate = (int) ((percentStock
+								* listOfFollowee.get(i).getMoneyAllocate() - listOfFollowee
+								.get(i).getCurrentAllocate()) / price);
+						int round_number= quantityRecalculate/100;
+						if (round_number<1) round_number=1;
+						quantityRecalculate = round_number*100;
+
+
+						report = orderService.executePlaceOrder(account,
+								side, OrsType, symbol, price,
+								quantityRecalculate);
+					}
+					else
+					{
+						int quantityOnHand = mapStockFollow.get(symbol);
+						report = orderService.executePlaceOrder(account,
+								side, OrsType, symbol, price,
+								quantityOnHand);
+					}
+
+					String order_id_return = report.getMessage();
+					System.out.println("Print order id: " + order_id_return);
+					System.out.println("Print report.getStatus()  id: " + report.getStatus());
+					//check lenh khong bi loi
+					if( report.getStatus() != false){
+						listOfOrderFollow.add(order_id_return);
+						OrderPendingList.add(order_id_return);
+						OrderPendingFollower.put(order_id_return, acc);
+					}
+				} catch (OrderException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+		}
+	}
+
 	public static void processMessageSent() throws ShutdownSignalException,
 			ConsumerCancelledException, InterruptedException {
 		QueueingConsumer.Delivery delivery = consumerSent.nextDelivery();
@@ -237,94 +331,7 @@ public class App {
 		SendOrder order = null;
 		try {
 			order = mapper.readValue(message, SendOrder.class);
-			String acc = order.getAccount();
-			String orderId = order.getOrderId();
-
-			// if (acc.equals("0001041716"))
-			if (mapOfTrader.containsKey(acc)) {
-				OrderPendingList.add(orderId);
-				
-				List<Follower> listOfFollower = mapOfTrader.get(acc);
-				List<String> listOfOrderFollow = new ArrayList<String>();
-
-				if (!OrderPendingMap.containsKey(orderId))
-					OrderPendingMap.put(orderId, listOfOrderFollow);
-
-				char side = Integer.toString(order.getSide()).charAt(0);
-				int type = order.getType();
-				String OrsType = "LO";
-				if (type == 1)
-					OrsType = "MP";
-				String symbol = order.getSymbol();
-				double price = order.getPrice();
-				double quantity = order.getQty();
-				int stockrisk = listOfStock.get(symbol);
-				Trader myTrader = listOfTrader.get(acc);
-
-				double percentStock = (myTrader.getStockOnhandValue() + price
-						* quantity)
-						/ (myTrader.getStockOnhandValue() + myTrader.getCash());
-
-				for (int i = 0; i < listOfFollower.size(); i++) {
-					// check follower neu Riskfactor < riskfactor cua ma CK can
-					// mua thi bo qua
-					if (side == '1'	&& listOfFollower.get(i).getRiskfactor() < stockrisk)
-						continue;
-
-					// check follower neu da mua nhieu hon muc cho phep thi bo
-					// qua
-					if (side == '1'	&& listOfFollower.get(i).getMaxopen() <= listOfFollower.get(i).getCurrentOpen())
-						continue;
-					Map<String, Integer> mapStockFollow = null;
-					if (side == '2') // lenh ban, check follower neu khong co CK
-										// thi bo qua
-					{
-						mapStockFollow = listOfFollower.get(i).getMapStockFollow();
-						if (!mapStockFollow.containsKey(symbol))
-							continue;
-					}
-
-					String account = listOfFollower.get(i).getId().trim();
-
-					try {
-						price = getFloorPrice(symbol); 
-						Report report;
-						if(side=='1')
-						{
-							int quantityRecalculate = (int) ((percentStock
-									* listOfFollower.get(i).getMoneyAllocate() - listOfFollower
-									.get(i).getCurrentAllocate()) / price);
-							int round_number= quantityRecalculate/100;
-							if (round_number<1) round_number=1;
-							quantityRecalculate = round_number*100;
-							
-							report = orderService.executePlaceOrder(account,
-								side, OrsType, symbol, price,
-								quantityRecalculate);
-						}
-						else
-						{
-							int quantityOnHand = mapStockFollow.get(symbol);
-							report = orderService.executePlaceOrder(account,
-									side, OrsType, symbol, price,
-									quantityOnHand);
-						}
-						
-						String order_id_return = report.getMessage();
-						System.out.println("Print order id: " + order_id_return);
-						System.out.println("Print report.getStatus()  id: " + report.getStatus());
-                       //check lenh khong bi loi 
-						if( report.getStatus() != false){
-							listOfOrderFollow.add(order_id_return);
-							OrderPendingList.add(order_id_return);
-							OrderPendingFollower.put(order_id_return, acc);
-						}
-					} catch (OrderException e) {
-						e.printStackTrace();
-					}
-				}
-
-			}
+			processSendOrder(order);
 		} catch (JsonGenerationException e) {
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
