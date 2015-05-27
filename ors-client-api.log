@@ -1740,3 +1740,41 @@ java.sql.SQLException: No suitable driver found for dbc:postgresql://10.26.0.164
 2015-05-21 13:06:45 INFO  Report:55 - execType0
 2015-05-21 13:06:45 INFO  FixSender:78 - Report: Status: true Message: 052115-FIXIN02-122-0-TEST_CLIENT_44_4-1432188406089
 2015-05-21 13:06:45 INFO  SynchronizeMap:28 - Store key: 1432188406089 value: Status: true Message: 052115-FIXIN02-122-0-TEST_CLIENT_44_4-1432188406089
+2015-05-26 16:17:36 INFO  FixSender:35 - FIX initiator starting
+2015-05-26 16:17:36 INFO  SessionSchedule:67 - [FIX.4.4:TEST_CLIENT_44_4->FIXIN02] daily, 00:00:00-UTC - 00:00:00-UTC
+2015-05-26 16:17:36 INFO  NetworkingOptions:121 - Socket option: SocketTcpNoDelay=true
+2015-05-26 16:17:36 INFO  NetworkingOptions:121 - Socket option: SocketSynchronousWrites=false
+2015-05-26 16:17:36 INFO  NetworkingOptions:121 - Socket option: SocketSynchronousWriteTimeout=30000
+2015-05-26 16:17:36 INFO  IoSessionInitiator:79 - [FIX.4.4:TEST_CLIENT_44_4->FIXIN02] [/10.26.0.165:51001]
+2015-05-26 16:17:36 INFO  SocketInitiator:263 - SessionTimer started
+2015-05-26 16:17:36 INFO  FixSender:37 - FIX initiator starting completed
+2015-05-26 16:17:36 INFO  OrderDao:30 - Connecting to DB
+2015-05-26 16:17:37 INFO  OrderDao:34 - Database is connected
+2015-05-26 16:17:37 INFO  InitiatorIoHandler:50 - MINA session created for FIX.4.4:TEST_CLIENT_44_4->FIXIN02: local=/10.27.10.19:50660, class org.apache.mina.transport.socket.nio.SocketSessionImpl, remote=/10.26.0.165:51001
+2015-05-26 16:18:06 INFO  FixSender:35 - FIX initiator starting
+2015-05-26 16:18:06 INFO  SessionSchedule:67 - [FIX.4.4:TEST_CLIENT_44_4->FIXIN02] daily, 00:00:00-UTC - 00:00:00-UTC
+2015-05-26 16:18:06 INFO  NetworkingOptions:121 - Socket option: SocketTcpNoDelay=true
+2015-05-26 16:18:06 INFO  NetworkingOptions:121 - Socket option: SocketSynchronousWrites=false
+2015-05-26 16:18:06 INFO  NetworkingOptions:121 - Socket option: SocketSynchronousWriteTimeout=30000
+2015-05-26 16:18:06 INFO  IoSessionInitiator:79 - [FIX.4.4:TEST_CLIENT_44_4->FIXIN02] [/10.26.0.165:51001]
+2015-05-26 16:18:06 INFO  SocketInitiator:263 - SessionTimer started
+2015-05-26 16:18:06 INFO  FixSender:37 - FIX initiator starting completed
+2015-05-26 16:18:06 INFO  OrderDao:30 - Connecting to DB
+2015-05-26 16:18:06 INFO  OrderDao:34 - Database is connected
+2015-05-26 16:18:06 INFO  InitiatorIoHandler:50 - MINA session created for FIX.4.4:TEST_CLIENT_44_4->FIXIN02: local=/10.27.10.19:50671, class org.apache.mina.transport.socket.nio.SocketSessionImpl, remote=/10.26.0.165:51001
+2015-05-26 20:33:44 INFO  InitiatorIoHandler:50 - MINA session created for FIX.4.4:TEST_CLIENT_44_4->FIXIN02: local=/10.27.10.19:52893, class org.apache.mina.transport.socket.nio.SocketSessionImpl, remote=/10.26.0.165:51001
+2015-05-26 20:33:45 INFO  Session:1901 - [FIX.4.4:TEST_CLIENT_44_4->FIXIN02] Disconnecting: IO Session closed
+2015-05-26 20:34:14 INFO  InitiatorIoHandler:50 - MINA session created for FIX.4.4:TEST_CLIENT_44_4->FIXIN02: local=/10.27.10.19:52912, class org.apache.mina.transport.socket.nio.SocketSessionImpl, remote=/10.26.0.165:51001
+2015-05-27 07:00:00 INFO  Session:1901 - [FIX.4.4:TEST_CLIENT_44_4->FIXIN02] Disconnecting: Session reset
+2015-05-27 07:00:01 INFO  InitiatorIoHandler:50 - MINA session created for FIX.4.4:TEST_CLIENT_44_4->FIXIN02: local=/10.27.10.19:57880, class org.apache.mina.transport.socket.nio.SocketSessionImpl, remote=/10.26.0.165:51001
+2015-05-27 09:15:15 INFO  FixSender:35 - FIX initiator starting
+2015-05-27 09:15:15 INFO  SessionSchedule:67 - [FIX.4.4:TEST_CLIENT_44_4->FIXIN02] daily, 00:00:00-UTC - 00:00:00-UTC
+2015-05-27 09:15:15 INFO  NetworkingOptions:121 - Socket option: SocketTcpNoDelay=true
+2015-05-27 09:15:15 INFO  NetworkingOptions:121 - Socket option: SocketSynchronousWrites=false
+2015-05-27 09:15:15 INFO  NetworkingOptions:121 - Socket option: SocketSynchronousWriteTimeout=30000
+2015-05-27 09:15:15 INFO  IoSessionInitiator:79 - [FIX.4.4:TEST_CLIENT_44_4->FIXIN02] [/10.26.0.165:51001]
+2015-05-27 09:15:15 INFO  SocketInitiator:263 - SessionTimer started
+2015-05-27 09:15:15 INFO  FixSender:37 - FIX initiator starting completed
+2015-05-27 09:15:15 INFO  OrderDao:30 - Connecting to DB
+2015-05-27 09:15:15 INFO  InitiatorIoHandler:50 - MINA session created for FIX.4.4:TEST_CLIENT_44_4->FIXIN02: local=/10.27.10.19:58822, class org.apache.mina.transport.socket.nio.SocketSessionImpl, remote=/10.26.0.165:51001
+2015-05-27 09:15:15 INFO  OrderDao:34 - Database is connected

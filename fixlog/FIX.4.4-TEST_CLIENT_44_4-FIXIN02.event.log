@@ -386,3 +386,29 @@
 20150521-06:06:18: Initiated logon request
 20150521-06:06:18: Logon contains ResetSeqNumFlag=Y, resetting sequence numbers to 1
 20150521-06:06:18: Received logon
+20150526-09:17:36: Session FIX.4.4:TEST_CLIENT_44_4->FIXIN02 schedule is daily, 00:00:00-UTC - 00:00:00-UTC
+20150526-09:17:36: Session state is not current; resetting FIX.4.4:TEST_CLIENT_44_4->FIXIN02
+20150526-09:17:36: Created session: FIX.4.4:TEST_CLIENT_44_4->FIXIN02
+20150526-09:17:37: Initiated logon request
+20150526-09:17:37: Logon contains ResetSeqNumFlag=Y, resetting sequence numbers to 1
+20150526-09:17:37: Received logon
+20150526-09:18:06: Session FIX.4.4:TEST_CLIENT_44_4->FIXIN02 schedule is daily, 00:00:00-UTC - 00:00:00-UTC
+20150526-09:18:06: Created session: FIX.4.4:TEST_CLIENT_44_4->FIXIN02
+20150526-09:18:07: Initiated logon request
+20150526-09:18:07: Logon contains ResetSeqNumFlag=Y, resetting sequence numbers to 1
+20150526-09:18:07: Received logon
+20150526-13:33:43: Disconnecting: Socket exception (/10.26.0.165:51001): java.io.IOException: An existing connection was forcibly closed by the remote host
+20150526-13:33:45: Initiated logon request
+20150526-13:34:15: Initiated logon request
+20150526-13:34:15: Logon contains ResetSeqNumFlag=Y, resetting sequence numbers to 1
+20150526-13:34:15: Received logon
+20150527-00:00:00: Received logout response
+20150527-00:00:00: Already disconnected: Received logout response
+20150527-00:00:01: Initiated logon request
+20150527-00:00:01: Logon contains ResetSeqNumFlag=Y, resetting sequence numbers to 1
+20150527-00:00:01: Received logon
+20150527-02:15:15: Session FIX.4.4:TEST_CLIENT_44_4->FIXIN02 schedule is daily, 00:00:00-UTC - 00:00:00-UTC
+20150527-02:15:15: Created session: FIX.4.4:TEST_CLIENT_44_4->FIXIN02
+20150527-02:15:16: Initiated logon request
+20150527-02:15:16: Logon contains ResetSeqNumFlag=Y, resetting sequence numbers to 1
+20150527-02:15:16: Received logon

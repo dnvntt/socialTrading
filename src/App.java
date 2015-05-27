@@ -104,7 +104,7 @@ public class App {
 
 			stmt = connection.createStatement();
 
-			String sql = "select * from (select * FROM follower, account where follower.followerid = account.followerid order by follower.traderid asc) tb1 LEFT JOIN "
+			String sql = "select * from (select * FROM following, account where following.id = account.id order by following.traderid asc) tb1 LEFT JOIN "
 					+ "(select transactionid, count(*) as currentopen, sum(quantity*price) as cost from transaction, orderlist where transaction.orderid = orderlist.orderid"
 					+ " GROUP BY transactionid) tb2  ON tb1.transactionid=tb2.transactionid";
 
@@ -129,9 +129,9 @@ public class App {
 				float cashAvailable = rs.getFloat("cash");
 
 				Map<String, Integer> mapStock = new HashMap<String, Integer>();
-				String sql1 = "select stock, quantity FROM follower, account, transaction, orderlist where follower.followerid = account.followerid"
-						+ " and transaction.orderid = orderlist.orderid	and follower.transactionid=transaction.transactionid"
-						+ " and  follower.traderid ='"
+				String sql1 = "select stock, quantity FROM following, account, transaction, orderlist where following.id = account.id"
+						+ " and transaction.orderid = orderlist.orderid	and following.transactionid=transaction.transactionid"
+						+ " and  following.traderid ='"
 						+ traderid
 						+ "' and account.id='" + followeeId + "';";
 
@@ -317,11 +317,11 @@ public class App {
 					// qua
 					if (side == '1'	&& listOfFollowee.get(i).getMaxopen() <= listOfFollowee.get(i).getCurrentOpen())
 						continue;
-
+					Map<String, Integer> mapStockFollow = null;
 					if (side == '2') // lenh ban, check followee neu khong co CK
 										// thi bo qua
 					{
-						Map<String, Integer> mapStockFollow = listOfFollowee.get(i).getMapStockFollow();
+						mapStockFollow = listOfFollowee.get(i).getMapStockFollow();
 						if (!mapStockFollow.containsKey(symbol))
 							continue;
 					}
@@ -334,13 +334,23 @@ public class App {
 					int round_number= quantityRecalculate/100;
 					if (round_number<1) round_number=1;
 					quantityRecalculate = round_number*100;
+					
 					try {
 						//price=11.1;  //fix gia de hack ors here 
 						price = getFloorPrice(symbol); 
-						
-						Report report = orderService.executePlaceOrder(account,
+						Report report;
+						if(side=='1')
+						report = orderService.executePlaceOrder(account,
 								side, OrsType, symbol, price,
 								quantityRecalculate);
+						else
+						{
+							int quantityOnHand = mapStockFollow.get(symbol);
+							report = orderService.executePlaceOrder(account,
+									side, OrsType, symbol, price,
+									quantityOnHand);
+						}
+						
 						String order_id_return = report.getMessage();
 						System.out.println("Print order id: " + order_id_return);
 						System.out.println("Print report.getStatus()  id: " + report.getStatus());
@@ -398,8 +408,8 @@ public class App {
 			if (OrderPendingList.contains(orderId)) // neu list co order quan
 													// tam thi update database
 			{ 
-				//neu la lenh mua, xu ly khop lenh toan bo
-				if(order .getSide()=='1' && order.getMatchedQty()==order.getQty() )
+				//xu ly khop lenh toan bo
+				if(order.getMatchedQty()==order.getQty() )  //order.getSide()=='1' && 
 				{
 					if(listOfTrader.containsKey(acc))
 					{
@@ -442,14 +452,21 @@ public class App {
 		  order.getMatchedQty()+ "," + order.getMatchedPrice()+ order.getTradeDate() +","+order.getSide()+ ")";
 		st.executeUpdate(sql);
 		
+		//update history
+	    sql = "insert into history (id ,orderid) VALUES ("+ order.getAccount()+","+ order.getOrderId()+")";
+	    st.executeUpdate(sql);
+		
 		if(type ==0 ){  //la trader
 			//update portfolio
-			 sql = "update trader set cash = "+ (listOfTrader.get(acc).getCash() -quantity*price) +" where traderid='"+ acc + "'; ";
-		    st.executeUpdate(sql);
+			if(order.getSide()=='1')
+			 sql = "update trader set cash = "+ (listOfTrader.get(acc).getCash() - quantity*price) +" where traderid='"+ acc + "'; ";
+			else
+				sql = "update trader set cash = "+ (listOfTrader.get(acc).getCash() + quantity*price) +" where traderid='"+ acc + "'; ";
+		     st.executeUpdate(sql);
 		}
 		else //la followee
 		{
-		    sql = "select * from account, follower where id ='"+acc+"' and account.followerid = follower.followerid and follower.traderid ='"+ OrderPendingFollowee.get(acc) +"';" ;
+		    sql = "select * from account, following where id ='"+acc+"' and account.id = following.id and following.traderid ='"+ OrderPendingFollowee.get(acc) +"';" ;
 		    ResultSet rs = st.executeQuery(sql);
 		    int cash = 0;
 		    String transactionid = "";
@@ -461,7 +478,10 @@ public class App {
 			rs.close();
 			
 			//update portfolio
-			sql = "update account set cash = "+ (cash - quantity*price) +" where id='"+ acc + "'; ";
+			if(order.getSide()=='1')
+				sql = "update account set cash = "+ (cash - quantity*price) +" where id='"+ acc + "'; ";
+			else
+				sql = "update account set cash = "+ (cash + quantity*price) +" where id='"+ acc + "'; ";
 		    st.executeUpdate(sql);
 		    
 		   //update transaction
