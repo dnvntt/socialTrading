@@ -245,10 +245,6 @@ public class App {
 				OrderPendingMap.put(orderId, listOfOrderFollow);
 
 			char side = Integer.toString(order.getSide()).charAt(0);
-			int type = order.getType();
-			String OrsType = "LO";
-			if (type == 1)
-				OrsType = "MP";
 			String symbol = order.getSymbol();
 			double price = order.getPrice();
 			double quantity = order.getQty();
@@ -280,15 +276,12 @@ public class App {
 						continue;
 				}
 
-				// FIXME: Contain the trim() in entity classes
-				String account = f.getId().trim();
-
 				try {
 					price = getFloorPrice(symbol);
 					SendOrder orderByThisFollower = new SendOrder();
 					orderByThisFollower.setAccount(acc);
 					orderByThisFollower.setSide(side);
-					orderByThisFollower.setType(type);
+					orderByThisFollower.setType(order.getType());
 					orderByThisFollower.setSymbol(symbol);
 					// FIXME: Dangerous cast. Why is SendOrder.price int?;
 					orderByThisFollower.setPrice((int) price);
