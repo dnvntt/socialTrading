@@ -2,3 +2,4 @@
 /fixlog/
 /store/
 ors-client-api.log
+*.class
