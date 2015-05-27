@@ -3,9 +3,13 @@ public class SendOrder {
     private String orderId;
 	private String account;
     private String transactTime;
+
+	// FIXME Refactor to use enum
     private int side;
     private String symbol;
     private String tradeDate;
+
+	// FIXME Refactor to use enum
     private int type;
     private int qty;
     private int price;

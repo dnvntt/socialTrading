@@ -2,7 +2,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -210,7 +209,7 @@ public class App {
 			}
 		});
 		t2.start();
-        
+		
 		
 		/*while (true) {
 			processMessage();
@@ -229,15 +228,17 @@ public class App {
 		return Integer.parseInt(floorPrice.substring(0, floorPrice.indexOf(",")));
 	}
 
-	public static void processSendOrder(SendOrder order) {
+	public static List<SendOrder> replicateOrderForFollowers(SendOrder order) {
 		String acc = order.getAccount();
 		String orderId = order.getOrderId();
+		List<SendOrder> followerOrders = new ArrayList<SendOrder>();
 
-		// if (acc.equals("0001041716"))
+		// Proceed if we are managing the trader who placed this order
 		if (mapOfTrader.containsKey(acc)) {
 			OrderPendingList.add(orderId);
 
-			List<Follower> listOfFollowee = mapOfTrader.get(acc);
+			// Get his followers
+			List<Follower> listOfFollower = mapOfTrader.get(acc);
 			List<String> listOfOrderFollow = new ArrayList<String>();
 
 			if (!OrderPendingMap.containsKey(orderId))
@@ -254,73 +255,66 @@ public class App {
 			int stockrisk = listOfStock.get(symbol);
 			Trader myTrader = listOfTrader.get(acc);
 
-			double percentStock = (myTrader.getStockOnhandValue() + price
-					* quantity)
-					/ (myTrader.getStockOnhandValue() + myTrader.getCash());
+			double percentStock = (myTrader.getStockOnhandValue() + price * quantity) /
+				(myTrader.getStockOnhandValue() + myTrader.getCash());
 
-			for (int i = 0; i < listOfFollowee.size(); i++) {
-				// check follower neu Riskfactor < riskfactor cua ma CK can
+			// For each follower, duplicate the order made by the trader, with some necessary adjustments
+			for (Follower f : listOfFollower) {
+				// check followee neu Riskfactor < riskfactor cua ma CK can
 				// mua thi bo qua
-				if (side == '1'	&& listOfFollowee.get(i).getRiskfactor() < stockrisk)
+				// FIXME Needs test
+				if (side == '1'	&& f.getRiskfactor() < stockrisk)
 					continue;
 
 				// check follower neu da mua nhieu hon muc cho phep thi bo
 				// qua
-				if (side == '1'	&& listOfFollowee.get(i).getMaxopen() <= listOfFollowee.get(i).getCurrentOpen())
+				// FIXME Needs test
+				if (side == '1'	&& f.getMaxopen() <= f.getCurrentOpen())
 					continue;
+
 				Map<String, Integer> mapStockFollow = null;
-				if (side == '2') // lenh ban, check followee neu khong co CK
-				// thi bo qua
-				{
-					mapStockFollow = listOfFollowee.get(i).getMapStockFollow();
+				// lenh ban, check followee neu khong co CK thi bo qua
+				if (side == '2') {
+					mapStockFollow = f.getMapStockFollow();
 					if (!mapStockFollow.containsKey(symbol))
 						continue;
 				}
 
-				String account = listOfFollowee.get(i).getId().trim();
+				// FIXME: Contain the trim() in entity classes
+				String account = f.getId().trim();
 
 				try {
 					price = getFloorPrice(symbol);
-					Report report;
-					if(side=='1')
-					{
-						int quantityRecalculate = (int) ((percentStock
-								* listOfFollowee.get(i).getMoneyAllocate() - listOfFollowee
-								.get(i).getCurrentAllocate()) / price);
-						int round_number= quantityRecalculate/100;
-						if (round_number<1) round_number=1;
-						quantityRecalculate = round_number*100;
+					SendOrder orderByThisFollower = new SendOrder();
+					orderByThisFollower.setAccount(acc);
+					orderByThisFollower.setSide(side);
+					orderByThisFollower.setType(type);
+					orderByThisFollower.setSymbol(symbol);
+					// FIXME: Dangerous cast. Why is SendOrder.price int?;
+					orderByThisFollower.setPrice((int) price);
 
+					if (side == '1') {
+						int quantityRecalculate =
+							(int) ((percentStock * f.getMoneyAllocate() - f.getCurrentAllocate()) / price);
+						int round_number = quantityRecalculate / 100;
+						if (round_number < 1) round_number = 1;
+						quantityRecalculate = round_number * 100;
 
-						report = orderService.executePlaceOrder(account,
-								side, OrsType, symbol, price,
-								quantityRecalculate);
-					}
-					else
-					{
+						orderByThisFollower.setQty(quantityRecalculate);
+
+					} else {
 						int quantityOnHand = mapStockFollow.get(symbol);
-						report = orderService.executePlaceOrder(account,
-								side, OrsType, symbol, price,
-								quantityOnHand);
+						orderByThisFollower.setQty(quantityOnHand);
 					}
 
-					String order_id_return = report.getMessage();
-					System.out.println("Print order id: " + order_id_return);
-					System.out.println("Print report.getStatus()  id: " + report.getStatus());
-					//check lenh khong bi loi
-					if( report.getStatus() != false){
-						listOfOrderFollow.add(order_id_return);
-						OrderPendingList.add(order_id_return);
-						OrderPendingFollower.put(order_id_return, acc);
-					}
-				} catch (OrderException e) {
-					e.printStackTrace();
+					followerOrders.add(orderByThisFollower);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
-
 		}
+
+		return followerOrders;
 	}
 
 	public static void processMessageSent() throws ShutdownSignalException,
@@ -331,7 +325,32 @@ public class App {
 		SendOrder order = null;
 		try {
 			order = mapper.readValue(message, SendOrder.class);
-			processSendOrder(order);
+			List<SendOrder> followerOrders = replicateOrderForFollowers(order);
+
+			for (SendOrder followerOrder : followerOrders) {
+				try {
+					Report report = orderService.executePlaceOrder(
+							followerOrder.getAccount(),
+							Integer.toString(followerOrder.getSide()).charAt(0),
+							followerOrder.getType() == 1 ? "MP" : "LO",
+							followerOrder.getSymbol(),
+							followerOrder.getPrice(),
+							followerOrder.getQty());
+
+					String order_id_return = report.getMessage();
+					System.out.println("Print order id: " + order_id_return);
+					System.out.println("Print report.getStatus()  id: " + report.getStatus());
+
+					// check lenh khong bi loi
+					if(report.getStatus() != false) {
+						OrderPendingList.add(order_id_return);
+						OrderPendingFollower.put(order_id_return, followerOrder.getAccount());
+					}
+				} catch (OrderException e) {
+					// FIXME: What to do if this order fails to send?
+					e.printStackTrace();
+				}
+			}
 		} catch (JsonGenerationException e) {
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
@@ -410,7 +429,7 @@ public class App {
 			 sql = "update trader set cash = "+ (listOfTrader.get(acc).getCash() - quantity*price) +" where traderid='"+ acc + "'; ";
 			else
 				sql = "update trader set cash = "+ (listOfTrader.get(acc).getCash() + quantity*price) +" where traderid='"+ acc + "'; ";
-		     st.executeUpdate(sql);
+			 st.executeUpdate(sql);
 		}
 		else //la follower
 		{
@@ -430,8 +449,8 @@ public class App {
 				sql = "update account set cash = "+ (cash - quantity*price) +" where id='"+ acc + "'; ";
 			else
 				sql = "update account set cash = "+ (cash + quantity*price) +" where id='"+ acc + "'; ";
-		    st.executeUpdate(sql);
-		    
+			st.executeUpdate(sql);
+			
 		   //update transaction
 		    if(order.getSide()=='1')  {
 		    	sql = "insert into transaction (transactionid, orderid) VALUES ('"+ transactionid +"','"+ orderId + "'; ";
@@ -449,7 +468,6 @@ public class App {
 		    	sql = "delete from transaction where  orderid='"+  orderIdDelete + "'; ";
 		    	st.executeUpdate(sql);
 		    }
-		    	
 		}
 		
 		st.close();
