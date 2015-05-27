@@ -1,3 +1,5 @@
+package vn.com.vndirect.socialtrading;
+
 public class ExecutedOrder {
 	private String orderId;
 	private String account;

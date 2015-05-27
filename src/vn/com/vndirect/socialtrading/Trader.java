@@ -1,3 +1,4 @@
+package vn.com.vndirect.socialtrading;
 
 public class Trader {
 	private String id;

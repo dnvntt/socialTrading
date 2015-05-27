@@ -1,3 +1,5 @@
+package vn.com.vndirect.socialtrading;
+
 public class SendOrder {
 
     private String orderId;

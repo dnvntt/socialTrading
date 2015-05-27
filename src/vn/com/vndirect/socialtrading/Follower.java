@@ -1,3 +1,5 @@
+package vn.com.vndirect.socialtrading;
+
 import java.util.HashMap;
 import java.util.Map;
 
