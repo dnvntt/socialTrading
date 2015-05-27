@@ -15,10 +15,6 @@ import java.util.Map;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.tempuri.AuthenticationHeader;
-import org.tempuri.Balance;
-import org.tempuri.GetBalancesResult;
-import org.tempuri.OnlineTradingServiceSoapProxy;
 
 import vn.com.vndirect.ors.client.api.OrderService;
 import vn.com.vndirect.ors.client.api.OrderServiceImpl;
@@ -374,26 +370,6 @@ public class App {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public static double getMoneyAvailable(String accNo) {
-		OnlineTradingServiceSoapProxy helloService = new OnlineTradingServiceSoapProxy();
-
-		AuthenticationHeader header = new AuthenticationHeader();
-		header.setUsername("boadmin");
-		header.setPassword("1");
-		header.setSessionId("");
-		header.setCustomerId("");
-
-		GetBalancesResult balanceResult = null;
-		try {
-			balanceResult = helloService.getBalances(header, accNo);
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-
-		Balance balance = balanceResult.getGetBalances();
-		return balance.getMoneyAvailableForInvestment();
 	}
 
 	public static void processMessageExecuted() throws ShutdownSignalException,
