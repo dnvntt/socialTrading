@@ -1,7 +1,7 @@
 import java.util.HashMap;
 import java.util.Map;
 
-public class Followee {
+public class Follower {
 	// private String followerid;
 	private String id;
 	private int maxopen;
@@ -10,20 +10,30 @@ public class Followee {
 	private float currentAllocate;
 	private int riskfactor;
 	private float cash;
-	private Map <String,Integer> mapStockFollow = new HashMap<String, Integer>();
+	private Map <String,Integer> mapStockQuantityFollow = new HashMap<String, Integer>();
+	private Map <String,String> mapStockOrderFollow = new HashMap<String, String>();
 	
+	public Map<String, String> getMapStockOrderFollow() {
+		return mapStockOrderFollow;
+	}
+
+	public void setMapStockOrderFollow(Map<String, String> mapStockOrderFollow) {
+		this.mapStockOrderFollow = mapStockOrderFollow;
+	}
+
 	public Map<String, Integer> getMapStockFollow() {
-		return mapStockFollow;
+		return mapStockQuantityFollow;
+		
 	}
 
 	public void setMapStockFollow(Map<String, Integer> mapStock) {
-		this.mapStockFollow = mapStock;
+		this.mapStockQuantityFollow = mapStock;
 	}
 
-	public Followee(String id1,int maxopen1,int currentOpen1,float moneyAllocate1,float currentAllocate1,int riskfactor1,float cash1,Map <String,Integer> mapStock1) 
+	public Follower(String id1,int maxopen1,int currentOpen1,float moneyAllocate1,float currentAllocate1,int riskfactor1,float cash1,Map <String,Integer> mapStockQuantity1,Map <String,String> mapStockOrder1) 
 	{
 		id=id1;maxopen=maxopen1; currentOpen=currentOpen1;moneyAllocate=moneyAllocate1;currentAllocate=currentAllocate1;
-		riskfactor=riskfactor1;cash=cash1; mapStockFollow=mapStock1;
+		riskfactor=riskfactor1;cash=cash1; mapStockQuantityFollow=mapStockQuantity1;mapStockOrderFollow= mapStockOrder1;
 	}
 
 	public String getId() {
