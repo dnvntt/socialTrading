@@ -4,7 +4,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,10 +64,15 @@ public class App {
 		String EXCHANGE_NAME_EXECUTED = "NotiCenter.Exchange.ExecutedOrder";
 
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost("10.25.1.94");
+		/*factory.setHost("10.25.1.94");
 		factory.setPort(5672);
 		factory.setUsername("noticenter");
-		factory.setPassword("abcd@123");
+		factory.setPassword("abcd@123");*/
+		factory.setHost("10.26.0.160");
+		factory.setPort(5672);
+		factory.setUsername("guest");
+		factory.setPassword("guest");
+		
 		Connection conn = factory.newConnection();
 
 		consumerSent = defineConsumer(QUEUE_NAME_SENT, EXCHANGE_NAME_SENT, conn);
@@ -168,7 +180,9 @@ public class App {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			System.exit(0);
 		}
-
+		
+		OrderPendingList.add("0068060415005149");
+		OrderPendingFollower.put("0068060415005149", "0001011079");
 
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
@@ -220,15 +234,13 @@ public class App {
 		return consumer;
 	}
 
-	public static void main(String[] args) throws java.io.IOException,
-			InterruptedException {
-
+	public static void main(String[] args) throws java.io.IOException, InterruptedException {
 		App app = new App();
 	}
 	
 	public static int getFloorPrice(String symbol) throws IOException
 	{
-		String link= "http://10.26.0.165:8000/sInfo?sym="+symbol+"&ex="+2; //1 cho hcm, 2 cho hn
+		String link= "http://10.26.0.165:8000/sInfo?sym="+symbol+"&ex="+1; //1 cho hcm, 2 cho hn
 		URL url = new URL(link);  
 		BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
 		String strTemp =  br.readLine();
@@ -255,8 +267,8 @@ public class App {
 
 			char side = Integer.toString(order.getSide()).charAt(0);
 			String symbol = order.getSymbol();
-			double price = order.getPrice();
-			double quantity = order.getQty();
+			int price = order.getPrice();
+			int quantity = order.getQty();
 			int stockrisk = listOfStock.get(symbol);
 			Trader myTrader = listOfTrader.get(acc);
 
@@ -288,12 +300,11 @@ public class App {
 				try {
 					price = getFloorPrice(symbol);
 					SendOrder orderByThisFollower = new SendOrder();
-					orderByThisFollower.setAccount(acc);
+					orderByThisFollower.setAccount(f.getId());
 					orderByThisFollower.setSide(order.getSide());
 					orderByThisFollower.setType(order.getType());
 					orderByThisFollower.setSymbol(symbol);
-					// FIXME: Dangerous cast. Why is SendOrder.price int?;
-					orderByThisFollower.setPrice((int) price);
+					orderByThisFollower.setPrice( price);
 
 					if (side == '1') {
 						int quantityRecalculate =
@@ -363,6 +374,19 @@ public class App {
 		}
 	}
 
+	public java.sql.Date convertToSqlDate(String  mydate )
+	{
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd-hh:mm:ss");
+		Date returnDate = null;
+		try {
+			returnDate = new java.sql.Date(formatter.parse(mydate).getTime());
+		} catch (ParseException e) {
+			//FIXME
+			e.printStackTrace();
+		}
+		return returnDate;
+	}
+	
 	public void processMessageExecuted() throws ShutdownSignalException,
 			ConsumerCancelledException, InterruptedException {
 		QueueingConsumer.Delivery delivery = consumerExecuted.nextDelivery();
@@ -414,31 +438,33 @@ public class App {
 		int price = order.getMatchedPrice();
 		String acc = order.getAccount();
 		String orderId= order.getOrderId();
-		
+		Date executedDate = convertToSqlDate(order.getTradeDate());
 		Statement st = conn.createStatement();
 		
 		// update orderList
 		PreparedStatement orderListUpdateSt = conn.prepareStatement(
-				"INSERT INTO orderlist (orderid, stock, quantity, price, date, side) VALUES (?, ?, ?, ?, ?, ?)");
+				"INSERT INTO orderlist (orderid, stock, quantity, price, date, side,id) VALUES (?, ?, ?, ?, ?, ?,?)");
 		orderListUpdateSt.setString(1, orderId);
 		orderListUpdateSt.setString(2, order.getSymbol());
 		orderListUpdateSt.setInt(3, order.getMatchedQty());
 		orderListUpdateSt.setInt(4, order.getMatchedPrice());
-		orderListUpdateSt.setString(5, order.getTradeDate().substring(0, 8));
+		orderListUpdateSt.setDate(5, executedDate);
 		orderListUpdateSt.setInt(6, order.getSide());
+		orderListUpdateSt.setString(6, order.getAccount());
 		orderListUpdateSt.executeUpdate();
 		
 		// update history
 		PreparedStatement historyUpdateSt;
+				
 		if (type == 0) {
 			historyUpdateSt = conn.prepareStatement(
 					"insert into history (id, orderid, date) VALUES (?, ?, ?)");
-			historyUpdateSt.setString(3, order.getTradeDate());
+			historyUpdateSt.setDate(3, executedDate);
 		} else {
 			historyUpdateSt = conn.prepareStatement(
 					"insert into history (id, orderid, traderid, date) VALUES (?, ?, ?, ?)");
 			historyUpdateSt.setString(3, OrderPendingFollower.get(orderId));
-			historyUpdateSt.setString(4, order.getTradeDate());
+			historyUpdateSt.setDate(4, executedDate);
 		}
 
 		historyUpdateSt.setString(1, order.getAccount());
@@ -446,7 +472,7 @@ public class App {
 	    historyUpdateSt.executeUpdate();
 		
 		if (type == 0 ) {  // la trader
-			// update portfolio
+			// update account
 			PreparedStatement portfolioUpdateSt = conn.prepareStatement(
 					"UPDATE trader SET cash = ? WHERE traderid = ?");
 
@@ -469,12 +495,12 @@ public class App {
 			getFolloweesQuery.setString(2, OrderPendingFollower.get(orderId));
 		    ResultSet rs = getFolloweesQuery.executeQuery();
 
-		    int cash = 0;
+		    float cash = 0;
 		    String transactionid = "";
 		    
 		    while (rs.next()) {
 				transactionid = rs.getString("transactionid");
-				cash = rs.getInt("cash");
+				cash = rs.getFloat("cash");
 			}
 			rs.close();
 			
@@ -483,7 +509,7 @@ public class App {
 					"UPDATE account SET cash = ? WHERE id = ?");
 			portfolioUpdateSt.setString(2, acc);
 
-			if (order.getSide() == '1')
+			if (order.getSide() == 1)
 				portfolioUpdateSt.setFloat(1, cash - quantity * price);
 			else
 				portfolioUpdateSt.setFloat(1, cash + quantity * price);
@@ -491,7 +517,7 @@ public class App {
 			portfolioUpdateSt.executeUpdate();
 
 		    // update transaction
-		    if (order.getSide() == '1')  {
+		    if (order.getSide() == 1)  {
 				PreparedStatement insertTransactionSt = conn.prepareStatement(
 						"INSERT INTO transaction (transactionid, orderid) VALUES (?, ?)");
 				insertTransactionSt.setString(1, transactionid);
