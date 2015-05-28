@@ -27,7 +27,7 @@ public class App {
 
 	public static void main(String[] args) throws java.io.IOException,
 			InterruptedException {
-
+		Config.loadConfig();
 		App app = new App();
 		app.run();
 	}
@@ -53,22 +53,15 @@ public class App {
 	private List<String> OrderPendingList; // list all order pending of trader and follower
 
 	public App() throws IOException {
-		// FIXME: Externalize these config values
-		String QUEUE_NAME_SENT = "sentOrderList2";
-		String EXCHANGE_NAME_SENT = "NotiCenter.Exchange.SentOrder";
-
-		String QUEUE_NAME_EXECUTED = "executedOrderList2";
-		String EXCHANGE_NAME_EXECUTED = "NotiCenter.Exchange.ExecutedOrder";
-
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost("10.25.1.94");
-		factory.setPort(5672);
-		factory.setUsername("noticenter");
-		factory.setPassword("abcd@123");
+		factory.setHost(Config.RABBIT_HOST);
+		factory.setPort(Config.RABBIT_PORT);
+		factory.setUsername(Config.RABBIT_USERNAME);
+		factory.setPassword(Config.RABBIT_PASSWORD);
 		Connection conn = factory.newConnection();
 
-		consumerSent = defineConsumer(QUEUE_NAME_SENT, EXCHANGE_NAME_SENT, conn);
-		consumerExecuted = defineConsumer(QUEUE_NAME_EXECUTED, EXCHANGE_NAME_EXECUTED, conn);
+		consumerSent = defineConsumer(Config.QUEUE_NAME_SENT, Config.EXCHANGE_NAME_SENT, conn);
+		consumerExecuted = defineConsumer(Config.QUEUE_NAME_EXECUTED, Config.EXCHANGE_NAME_EXECUTED, conn);
 
 		mapper = new ObjectMapper();
 		orderService = new OrderServiceImpl();
