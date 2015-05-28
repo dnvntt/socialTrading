@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -27,6 +24,13 @@ import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.ShutdownSignalException;
 
 public class App {
+
+	public static void main(String[] args) throws java.io.IOException,
+			InterruptedException {
+
+		App app = new App();
+		app.run();
+	}
 
 	private ObjectMapper mapper;
 	private OrderService orderService;
@@ -75,6 +79,47 @@ public class App {
 		OrderPendingList = new ArrayList<String>();
 		OrderPendingFollower = new HashMap<String,String >();
 
+		reloadData();
+		run();
+	}
+
+	public void run() {
+		Thread t1 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					while (true) {
+						processMessageSent();
+					}
+				} catch (ShutdownSignalException e) {
+					e.printStackTrace();
+				} catch (ConsumerCancelledException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		t1.start();
+
+		Thread t2 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					while (true) {
+						processMessageExecuted();
+					}
+				} catch (ShutdownSignalException e) {
+					e.printStackTrace();
+				} catch (ConsumerCancelledException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		t2.start();
+	}
+
+	private void reloadData() {
 		Statement stmt = null;
 		try {
 			Class.forName("org.postgresql.Driver");
@@ -168,44 +213,6 @@ public class App {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			System.exit(0);
 		}
-
-
-		Thread t1 = new Thread(new Runnable() {
-			public void run() {
-				try {
-					while (true) {
-						processMessageSent();
-					}
-				} catch (ShutdownSignalException e) {
-					e.printStackTrace();
-				} catch (ConsumerCancelledException e) {
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		t1.start();
-
-
-
-		Thread t2 = new Thread(new Runnable() {
-			public void run() {
-				try {
-					while (true) {
-						processMessageExecuted();
-					}
-				} catch (ShutdownSignalException e) {
-					e.printStackTrace();
-				} catch (ConsumerCancelledException e) {
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		t2.start();
-
 	}
 	
 	
@@ -218,12 +225,6 @@ public class App {
 		QueueingConsumer consumer = new QueueingConsumer(channel);
 		channel.basicConsume(queueName, true, consumer);
 		return consumer;
-	}
-
-	public static void main(String[] args) throws java.io.IOException,
-			InterruptedException {
-
-		App app = new App();
 	}
 	
 	public static int getFloorPrice(String symbol) throws IOException
