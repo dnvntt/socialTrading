@@ -4,18 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.sql.*;
 import java.sql.Date;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -34,6 +27,13 @@ import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.ShutdownSignalException;
 
 public class App {
+
+	public static void main(String[] args) throws java.io.IOException,
+			InterruptedException {
+		Config.loadConfig();
+		App app = new App();
+		app.run();
+	}
 
 	private ObjectMapper mapper;
 	private OrderService orderService;
@@ -56,27 +56,15 @@ public class App {
 	private List<String> OrderPendingList; // list all order pending of trader and follower
 
 	public App() throws IOException {
-		// FIXME: Externalize these config values
-		String QUEUE_NAME_SENT = "sentOrderList2";
-		String EXCHANGE_NAME_SENT = "NotiCenter.Exchange.SentOrder";
-
-		String QUEUE_NAME_EXECUTED = "executedOrderList2";
-		String EXCHANGE_NAME_EXECUTED = "NotiCenter.Exchange.ExecutedOrder";
-
 		ConnectionFactory factory = new ConnectionFactory();
-		/*factory.setHost("10.25.1.94");
-		factory.setPort(5672);
-		factory.setUsername("noticenter");
-		factory.setPassword("abcd@123");*/
-		factory.setHost("10.26.0.160");
-		factory.setPort(5672);
-		factory.setUsername("guest");
-		factory.setPassword("guest");
-		
+		factory.setHost(Config.RABBIT_HOST);
+		factory.setPort(Config.RABBIT_PORT);
+		factory.setUsername(Config.RABBIT_USERNAME);
+		factory.setPassword(Config.RABBIT_PASSWORD);
 		Connection conn = factory.newConnection();
 
-		consumerSent = defineConsumer(QUEUE_NAME_SENT, EXCHANGE_NAME_SENT, conn);
-		consumerExecuted = defineConsumer(QUEUE_NAME_EXECUTED, EXCHANGE_NAME_EXECUTED, conn);
+		consumerSent = defineConsumer(Config.QUEUE_NAME_SENT, Config.EXCHANGE_NAME_SENT, conn);
+		consumerExecuted = defineConsumer(Config.QUEUE_NAME_EXECUTED, Config.EXCHANGE_NAME_EXECUTED, conn);
 
 		mapper = new ObjectMapper();
 		orderService = new OrderServiceImpl();
@@ -87,6 +75,47 @@ public class App {
 		OrderPendingList = new ArrayList<String>();
 		OrderPendingFollower = new HashMap<String,String >();
 
+		reloadData();
+		run();
+	}
+
+	public void run() {
+		Thread t1 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					while (true) {
+						processMessageSent();
+					}
+				} catch (ShutdownSignalException e) {
+					e.printStackTrace();
+				} catch (ConsumerCancelledException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		t1.start();
+
+		Thread t2 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					while (true) {
+						processMessageExecuted();
+					}
+				} catch (ShutdownSignalException e) {
+					e.printStackTrace();
+				} catch (ConsumerCancelledException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		t2.start();
+	}
+
+	private void reloadData() {
 		Statement stmt = null;
 		try {
 			Class.forName("org.postgresql.Driver");
@@ -180,45 +209,6 @@ public class App {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			System.exit(0);
 		}
-		
-		OrderPendingList.add("0068060415005149");
-		OrderPendingFollower.put("0068060415005149", "0001011079");
-
-		Thread t1 = new Thread(new Runnable() {
-			public void run() {
-				try {
-					while (true) {
-						processMessageSent();
-					}
-				} catch (ShutdownSignalException e) {
-					e.printStackTrace();
-				} catch (ConsumerCancelledException e) {
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		t1.start();
-
-
-
-		Thread t2 = new Thread(new Runnable() {
-			public void run() {
-				try {
-					while (true) {
-						processMessageExecuted();
-					}
-				} catch (ShutdownSignalException e) {
-					e.printStackTrace();
-				} catch (ConsumerCancelledException e) {
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		t2.start();
 
 	}
 	
@@ -232,10 +222,6 @@ public class App {
 		QueueingConsumer consumer = new QueueingConsumer(channel);
 		channel.basicConsume(queueName, true, consumer);
 		return consumer;
-	}
-
-	public static void main(String[] args) throws java.io.IOException, InterruptedException {
-		App app = new App();
 	}
 	
 	public static int getFloorPrice(String symbol) throws IOException
