@@ -424,17 +424,25 @@ public class App {
 		orderListUpdateSt.setString(2, order.getSymbol());
 		orderListUpdateSt.setInt(3, order.getMatchedQty());
 		orderListUpdateSt.setInt(4, order.getMatchedPrice());
-		orderListUpdateSt.setString(5, order.getTradeDate());
+		orderListUpdateSt.setString(5, order.getTradeDate().substring(0, 8));
 		orderListUpdateSt.setInt(6, order.getSide());
 		orderListUpdateSt.executeUpdate();
 		
 		// update history
-		PreparedStatement historyUpdateSt = conn.prepareStatement(
-				"insert into history (id, orderid, traderid, date) VALUES (?, ?, ?, ?)");
+		PreparedStatement historyUpdateSt;
+		if (type == 0) {
+			historyUpdateSt = conn.prepareStatement(
+					"insert into history (id, orderid, date) VALUES (?, ?, ?)");
+			historyUpdateSt.setString(3, order.getTradeDate());
+		} else {
+			historyUpdateSt = conn.prepareStatement(
+					"insert into history (id, orderid, traderid, date) VALUES (?, ?, ?, ?)");
+			historyUpdateSt.setString(3, OrderPendingFollower.get(orderId));
+			historyUpdateSt.setString(4, order.getTradeDate());
+		}
+
 		historyUpdateSt.setString(1, order.getAccount());
 		historyUpdateSt.setString(2, orderId);
-		historyUpdateSt.setString(3, OrderPendingFollower.get(orderId));
-		historyUpdateSt.setString(4, order.getTradeDate());
 	    historyUpdateSt.executeUpdate();
 		
 		if (type == 0 ) {  // la trader
@@ -452,13 +460,13 @@ public class App {
 			portfolioUpdateSt.executeUpdate();
 		} else { // la follower
 			PreparedStatement getFolloweesQuery = conn.prepareStatement(
-					"SELECT * from account, following " +
-							"WHERE id = ? " +
+					"SELECT transactionid, cash from account, following " +
+							"WHERE account.id = ? " +
 							"AND account.id = following.id " +
 							"AND following.traderid = ?");
 
 			getFolloweesQuery.setString(1, acc);
-			getFolloweesQuery.setString(2, OrderPendingFollower.get(acc));
+			getFolloweesQuery.setString(2, OrderPendingFollower.get(orderId));
 		    ResultSet rs = getFolloweesQuery.executeQuery();
 
 		    int cash = 0;
