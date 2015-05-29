@@ -260,7 +260,7 @@ public class App {
 			if (!OrderPendingMap.containsKey(orderId))
 				OrderPendingMap.put(orderId, listOfOrderFollow);
 
-			char side = Integer.toString(order.getSide()).charAt(0);
+			int side = order.getSide();
 			String symbol = order.getSymbol();
 			int price = order.getPrice();
 			int quantity = order.getQty();
@@ -275,19 +275,19 @@ public class App {
 				// check follower neu Riskfactor < riskfactor cua ma CK can
 				// mua thi bo qua
 				// FIXME Needs test
-				if (side == '1'	&& f.getRiskfactor() < stockrisk)
+				if (side == 1	&& f.getRiskfactor() < stockrisk)
 					continue;
 
 				// check follower neu da mua nhieu hon muc cho phep thi bo
 				// qua
 				// FIXME Needs test
-				if (side == '1'	&& f.getMaxopen() <= f.getCurrentOpen())
+				if (side == 1	&& f.getMaxopen() <= f.getCurrentOpen())
 					continue;
 
 				Map<String, Integer> mapStockFollow = null;
-				// lenh ban, check followee neu khong co CK thi bo qua
-				if (side == '2') {
-					mapStockFollow = f.getMapStockFollow();
+				// lenh ban, check followeer neu khong co CK thi bo qua
+				if (side == 2) {
+					mapStockFollow = f.getMapStockQuantityFollow();
 					if (!mapStockFollow.containsKey(symbol))
 						continue;
 				}
@@ -301,7 +301,7 @@ public class App {
 					orderByThisFollower.setSymbol(symbol);
 					orderByThisFollower.setPrice( price);
 
-					if (side == '1') {
+					if (side == 1) {
 						int quantityRecalculate =
 							(int) ((percentStock * f.getMoneyAllocate() - f.getCurrentAllocate()) / price);
 						int round_number = quantityRecalculate / 100;
@@ -431,8 +431,9 @@ public class App {
 	{
 		int quantity= order.getMatchedQty();
 		int price = order.getMatchedPrice();
-		String acc = order.getAccount();
+		String accountId = order.getAccount();
 		String orderId= order.getOrderId();
+		String symbol=  order.getSymbol();
 		Timestamp executedDate = convertToSqlDate(order.getTradeDate());
 		Statement st = conn.createStatement();
 		
@@ -440,9 +441,9 @@ public class App {
 		PreparedStatement orderListUpdateSt = conn.prepareStatement(
 				"INSERT INTO orderlist (orderid, stock, quantity, price, date, side) VALUES (?, ?, ?, ?, ?, ?)");
 		orderListUpdateSt.setString(1, orderId);
-		orderListUpdateSt.setString(2, order.getSymbol());
-		orderListUpdateSt.setInt(3, order.getMatchedQty());
-		orderListUpdateSt.setInt(4, order.getMatchedPrice());
+		orderListUpdateSt.setString(2, symbol);
+		orderListUpdateSt.setInt(3,quantity);
+		orderListUpdateSt.setInt(4, price);
 		orderListUpdateSt.setTimestamp(5, executedDate);
 		orderListUpdateSt.setInt(6, order.getSide());
 		orderListUpdateSt.executeUpdate();
@@ -461,7 +462,7 @@ public class App {
 			historyUpdateSt.setTimestamp(4, executedDate);
 		}
 
-		historyUpdateSt.setString(1, order.getAccount());
+		historyUpdateSt.setString(1, accountId);
 		historyUpdateSt.setString(2, orderId);
 	    historyUpdateSt.executeUpdate();
 		
@@ -470,23 +471,38 @@ public class App {
 			PreparedStatement portfolioUpdateSt = conn.prepareStatement(
 					"UPDATE trader SET cash = ? WHERE traderid = ?");
 
-			if (order.getSide() == '1') {
-				portfolioUpdateSt.setFloat(1, listOfTrader.get(acc).getCash() - quantity * price);
+			if (order.getSide() == 1) {
+				portfolioUpdateSt.setFloat(1, listOfTrader.get(accountId).getCash() - quantity * price);
 			} else {
-				portfolioUpdateSt.setFloat(1, listOfTrader.get(acc).getCash() + quantity * price);
+				portfolioUpdateSt.setFloat(1, listOfTrader.get(accountId).getCash() + quantity * price);
 			}
 
-			portfolioUpdateSt.setString(2, acc);
+			portfolioUpdateSt.setString(2, accountId);
 			portfolioUpdateSt.executeUpdate();
 		} else { // la follower
+			String traderId= OrderPendingFollower.get(orderId);
+			
+			//update mapOfTrader for this follower
+			List<Follower> listOfFollower = mapOfTrader.get(traderId);
+			
+			for (Follower f : listOfFollower){
+				if (f.getId().equals(accountId)){
+					if(order.getSide() == 1)
+						f.getMapStockQuantityFollow().put(symbol, quantity);
+					else
+						f.getMapStockQuantityFollow().remove(symbol); //neu ban thanh cong thi bo ma nay ra
+					break;
+				}
+			}
+			
 			PreparedStatement getFolloweesQuery = conn.prepareStatement(
 					"SELECT transactionid, cash from account, following " +
 							"WHERE account.id = ? " +
 							"AND account.id = following.id " +
 							"AND following.traderid = ?");
 
-			getFolloweesQuery.setString(1, acc);
-			getFolloweesQuery.setString(2, OrderPendingFollower.get(orderId));
+			getFolloweesQuery.setString(1, accountId);
+			getFolloweesQuery.setString(2, traderId);
 		    ResultSet rs = getFolloweesQuery.executeQuery();
 
 		    float cash = 0;
@@ -501,7 +517,7 @@ public class App {
 			// update account
 			PreparedStatement portfolioUpdateSt = conn.prepareStatement(
 					"UPDATE account SET cash = ? WHERE id = ?");
-			portfolioUpdateSt.setString(2, acc);
+			portfolioUpdateSt.setString(2, accountId);
 
 			if (order.getSide() == 1)
 				portfolioUpdateSt.setFloat(1, cash - quantity * price);
@@ -511,7 +527,7 @@ public class App {
 			portfolioUpdateSt.executeUpdate();
 
 		    // update transaction
-		    if (order.getSide() == 1)  {
+		    if (order.getSide() == 1){
 				PreparedStatement insertTransactionSt = conn.prepareStatement(
 						"INSERT INTO transaction (transactionid, orderid) VALUES (?, ?)");
 				insertTransactionSt.setString(1, transactionid);

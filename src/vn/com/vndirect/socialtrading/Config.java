@@ -4,7 +4,6 @@ package vn.com.vndirect.socialtrading;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.util.AbstractMap;
 import java.util.Properties;
 
 public class Config {

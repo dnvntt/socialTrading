@@ -23,12 +23,12 @@ public class Follower {
 		this.mapStockOrderFollow = mapStockOrderFollow;
 	}
 
-	public Map<String, Integer> getMapStockFollow() {
+	public Map<String, Integer> getMapStockQuantityFollow() {
 		return mapStockQuantityFollow;
 		
 	}
 
-	public void setMapStockFollow(Map<String, Integer> mapStock) {
+	public void setMapStockQuantityFollow(Map<String, Integer> mapStock) {
 		this.mapStockQuantityFollow = mapStock;
 	}
 
