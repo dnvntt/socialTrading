@@ -4,11 +4,18 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.sql.*;
-import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -209,7 +216,9 @@ public class App {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			System.exit(0);
 		}
-
+		
+		//OrderPendingList.add("143279719767912");
+		//OrderPendingFollower.put("143279719767912", "0001011079");
 	}
 	
 	
@@ -226,7 +235,7 @@ public class App {
 	
 	public static int getFloorPrice(String symbol) throws IOException
 	{
-		String link= "http://10.26.0.165:8000/sInfo?sym="+symbol+"&ex="+1; //1 cho hcm, 2 cho hn
+		String link= "http://10.26.0.165:8000/sInfo?sym="+symbol+"&ex="+2; //1 cho hcm, 2 cho hn
 		URL url = new URL(link);  
 		BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
 		String strTemp =  br.readLine();
@@ -344,7 +353,7 @@ public class App {
 					// check lenh khong bi loi
 					if(report.getStatus() != false) {
 						OrderPendingList.add(order_id_return);
-						OrderPendingFollower.put(order_id_return, followerOrder.getAccount());
+						OrderPendingFollower.put(order_id_return, order.getAccount()); 
 					}
 				} catch (OrderException e) {
 					// FIXME: What to do if this order fails to send?
@@ -360,17 +369,17 @@ public class App {
 		}
 	}
 
-	public java.sql.Date convertToSqlDate(String  mydate )
+	public java.sql.Timestamp convertToSqlDate(String mydate )
 	{
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd-hh:mm:ss");
-		Date returnDate = null;
+		java.util.Date returnDate = null;
 		try {
-			returnDate = new java.sql.Date(formatter.parse(mydate).getTime());
+			returnDate = (java.util.Date) formatter.parse(mydate);
 		} catch (ParseException e) {
 			//FIXME
 			e.printStackTrace();
 		}
-		return returnDate;
+		return new java.sql.Timestamp(returnDate.getTime());
 	}
 	
 	public void processMessageExecuted() throws ShutdownSignalException,
@@ -387,7 +396,7 @@ public class App {
 													// tam thi update database
 			{ 
 				// xu ly khop lenh toan bo
-				if(order.getMatchedQty()==order.getQty() )  //order.getSide()=='1' && 
+				if(order.getMatchedQty()==order.getQty() )  
 				{
 					if(listOfTrader.containsKey(acc))
 					{
@@ -424,19 +433,18 @@ public class App {
 		int price = order.getMatchedPrice();
 		String acc = order.getAccount();
 		String orderId= order.getOrderId();
-		Date executedDate = convertToSqlDate(order.getTradeDate());
+		Timestamp executedDate = convertToSqlDate(order.getTradeDate());
 		Statement st = conn.createStatement();
 		
 		// update orderList
 		PreparedStatement orderListUpdateSt = conn.prepareStatement(
-				"INSERT INTO orderlist (orderid, stock, quantity, price, date, side,id) VALUES (?, ?, ?, ?, ?, ?,?)");
+				"INSERT INTO orderlist (orderid, stock, quantity, price, date, side) VALUES (?, ?, ?, ?, ?, ?)");
 		orderListUpdateSt.setString(1, orderId);
 		orderListUpdateSt.setString(2, order.getSymbol());
 		orderListUpdateSt.setInt(3, order.getMatchedQty());
 		orderListUpdateSt.setInt(4, order.getMatchedPrice());
-		orderListUpdateSt.setDate(5, executedDate);
+		orderListUpdateSt.setTimestamp(5, executedDate);
 		orderListUpdateSt.setInt(6, order.getSide());
-		orderListUpdateSt.setString(6, order.getAccount());
 		orderListUpdateSt.executeUpdate();
 		
 		// update history
@@ -445,12 +453,12 @@ public class App {
 		if (type == 0) {
 			historyUpdateSt = conn.prepareStatement(
 					"insert into history (id, orderid, date) VALUES (?, ?, ?)");
-			historyUpdateSt.setDate(3, executedDate);
+			historyUpdateSt.setTimestamp(3, executedDate);
 		} else {
 			historyUpdateSt = conn.prepareStatement(
 					"insert into history (id, orderid, traderid, date) VALUES (?, ?, ?, ?)");
 			historyUpdateSt.setString(3, OrderPendingFollower.get(orderId));
-			historyUpdateSt.setDate(4, executedDate);
+			historyUpdateSt.setTimestamp(4, executedDate);
 		}
 
 		historyUpdateSt.setString(1, order.getAccount());
@@ -490,7 +498,7 @@ public class App {
 			}
 			rs.close();
 			
-			// update portfolio
+			// update account
 			PreparedStatement portfolioUpdateSt = conn.prepareStatement(
 					"UPDATE account SET cash = ? WHERE id = ?");
 			portfolioUpdateSt.setString(2, acc);
@@ -532,6 +540,8 @@ public class App {
 		}
 		
 		st.close();
+		
+	
 	}
 
 }
