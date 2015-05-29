@@ -1,4 +1,4 @@
-package vn.com.vndirect.socialtrading;
+package vn.com.vndirect.socialtrading.entity;
 
 public class SendOrder {
 
