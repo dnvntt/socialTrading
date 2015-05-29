@@ -467,18 +467,34 @@ public class App {
 	    historyUpdateSt.executeUpdate();
 		
 		if (type == 0 ) {  // la trader
-			// update account
-			PreparedStatement portfolioUpdateSt = conn.prepareStatement(
+			// update account of trader 
+			PreparedStatement traderUpdateSt = conn.prepareStatement(
 					"UPDATE trader SET cash = ? WHERE traderid = ?");
 
 			if (order.getSide() == 1) {
-				portfolioUpdateSt.setFloat(1, listOfTrader.get(accountId).getCash() - quantity * price);
+				traderUpdateSt.setFloat(1, listOfTrader.get(accountId).getCash() - quantity * price);
 			} else {
-				portfolioUpdateSt.setFloat(1, listOfTrader.get(accountId).getCash() + quantity * price);
+				traderUpdateSt.setFloat(1, listOfTrader.get(accountId).getCash() + quantity * price);
 			}
 
-			portfolioUpdateSt.setString(2, accountId);
-			portfolioUpdateSt.executeUpdate();
+			traderUpdateSt.setString(2, accountId);
+			traderUpdateSt.executeUpdate();
+			
+			// update portfolio of trader 
+			String sql= "insert into portfolio  (id ,stock,quantity,cost) VALUES ( ?,?,?,?) ";
+			if (order.getSide() == 2)
+				sql= "delete from portfolio  WHERE id = ? and stock= ?";
+			
+			PreparedStatement porfolioUpdateSt = conn.prepareStatement(sql);
+			porfolioUpdateSt.setString(1, accountId);
+			porfolioUpdateSt.setString(2, symbol);
+			
+			if (order.getSide() == 1) {
+				porfolioUpdateSt.setInt(3, quantity);
+				porfolioUpdateSt.setInt(4, price);
+			}
+			porfolioUpdateSt.executeUpdate();
+			
 		} else { // la follower
 			String traderId= OrderPendingFollower.get(orderId);
 			
