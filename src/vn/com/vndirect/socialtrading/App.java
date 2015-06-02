@@ -330,11 +330,11 @@ public class App {
 		QueueingConsumer.Delivery delivery = consumerSent.nextDelivery();
 		String message = new String(delivery.getBody());
 		System.out.println(message);
-		SendOrder order = null;
+		SendOrder orderByTrader = null;
 
 		try {
-			order = mapper.readValue(message, SendOrder.class);
-			List<SendOrder> followerOrders = replicateOrderForFollowers(order);
+			orderByTrader = mapper.readValue(message, SendOrder.class);
+			List<SendOrder> followerOrders = replicateOrderForFollowers(orderByTrader);
 
 			for (SendOrder followerOrder : followerOrders) {
 				try {
@@ -353,7 +353,7 @@ public class App {
 					// check lenh khong bi loi
 					if(report.getStatus() != false) {
 						OrderPendingList.add(order_id_return);
-						OrderPendingFollower.put(order_id_return, order.getAccount()); 
+						OrderPendingFollower.put(order_id_return, orderByTrader.getAccount()); 
 					}
 				} catch (OrderException e) {
 					// FIXME: What to do if this order fails to send?
@@ -376,7 +376,6 @@ public class App {
 		try {
 			returnDate = (java.util.Date) formatter.parse(mydate);
 		} catch (ParseException e) {
-			//FIXME
 			e.printStackTrace();
 		}
 		return new java.sql.Timestamp(returnDate.getTime());
@@ -572,8 +571,6 @@ public class App {
 		}
 		
 		st.close();
-		
-	
 	}
 
 }
