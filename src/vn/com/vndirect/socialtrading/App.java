@@ -32,14 +32,25 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.ShutdownSignalException;
+import vn.com.vndirect.socialtrading.api.ApiHandler;
+import vn.com.vndirect.socialtrading.entity.ExecutedOrder;
+import vn.com.vndirect.socialtrading.entity.Follower;
+import vn.com.vndirect.socialtrading.entity.SendOrder;
+import vn.com.vndirect.socialtrading.entity.Trader;
 
 public class App {
 
-	public static void main(String[] args) throws java.io.IOException,
-			InterruptedException {
+	public static void main(String[] args) {
 		Config.loadConfig();
-		App app = new App();
-		app.run();
+		App app = null;
+
+		new ApiHandler();
+		try {
+			app = new App();
+			app.run();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private ObjectMapper mapper;
