@@ -6,6 +6,8 @@ public class Trader {
 	private float moneyFollow;
 	private float cash;
 	private float stockOnhandValue;
+
+	public Trader() {}
 	
 	public Trader(String id1,int numberFollow1,float moneyFollow1,float cash1,float stockOnhandValue1)
 	{
