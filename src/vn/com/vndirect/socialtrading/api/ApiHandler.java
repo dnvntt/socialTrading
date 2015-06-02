@@ -11,7 +11,8 @@ public class ApiHandler {
     public ApiHandler() {
         final ObjectMapper mapper = new ObjectMapper();
 
-        Spark.staticFileLocation("/web");
+        // FIXME: This should be removed when we extract the frontend code to its own application
+        Spark.externalStaticFileLocation("src/web");
 
         // Return all traders
         Spark.get("/traders", new Route() {
