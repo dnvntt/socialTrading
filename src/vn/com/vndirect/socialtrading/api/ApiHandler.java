@@ -13,9 +13,10 @@ public class ApiHandler {
 
         // FIXME: This should be removed when we extract the frontend code to its own application
         Spark.externalStaticFileLocation("src/web");
+        String PREFIX = "/api";
 
         // Return all traders
-        Spark.get("/traders", new Route() {
+        Spark.get(PREFIX + "/traders", new Route() {
             public Object handle(Request request, Response response) throws Exception {
                 TraderDao dao = new TraderDao();
                 return mapper.writeValueAsString(dao.allTraders());
@@ -23,7 +24,7 @@ public class ApiHandler {
         });
 
         // Return a specific trader
-        Spark.get("/trader/:id", new Route() {
+        Spark.get(PREFIX + "/trader/:id", new Route() {
             public Object handle(Request request, Response response) throws Exception {
                 TraderDao dao = new TraderDao();
                 Trader trader = dao.getTraderById(request.params(":id"));
