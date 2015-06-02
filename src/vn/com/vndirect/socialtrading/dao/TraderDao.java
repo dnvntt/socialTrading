@@ -1,6 +1,7 @@
 package vn.com.vndirect.socialtrading.dao;
 
 
+import vn.com.vndirect.socialtrading.Config;
 import vn.com.vndirect.socialtrading.entity.Trader;
 
 import java.sql.*;
@@ -12,8 +13,7 @@ public class TraderDao {
 
     public TraderDao() throws SQLException {
         connection = DriverManager.getConnection(
-                "jdbc:postgresql://localhost:5432/postgres", "postgres",
-                "1111");
+                Config.DB_URL, Config.DB_USERNAME, Config.DB_PASSWORD);
     }
 
     public List<Trader> allTraders() throws SQLException {

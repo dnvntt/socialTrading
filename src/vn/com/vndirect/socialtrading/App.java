@@ -138,8 +138,7 @@ public class App {
 		try {
 			Class.forName("org.postgresql.Driver");
 			connection = DriverManager.getConnection(
-					"jdbc:postgresql://localhost:5432/zulu", "postgres",
-					"123456");
+					Config.DB_URL, Config.DB_USERNAME, Config.DB_PASSWORD);
 
 			stmt = connection.createStatement();
 
@@ -460,7 +459,7 @@ public class App {
 		
 		// update history
 		PreparedStatement historyUpdateSt;
-				
+
 		if (type == 0) {
 			historyUpdateSt = conn.prepareStatement(
 					"insert into history (id, orderid, date) VALUES (?, ?, ?)");
