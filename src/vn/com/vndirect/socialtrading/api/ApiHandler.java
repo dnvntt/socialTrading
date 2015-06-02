@@ -11,6 +11,8 @@ public class ApiHandler {
     public ApiHandler() {
         final ObjectMapper mapper = new ObjectMapper();
 
+        Spark.staticFileLocation("/web");
+
         // Return all traders
         Spark.get("/traders", new Route() {
             public Object handle(Request request, Response response) throws Exception {
