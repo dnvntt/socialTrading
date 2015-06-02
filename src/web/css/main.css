@@ -1,0 +1,30 @@
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+}
+
+.trader-list > .trader:nth-child(odd) {
+  background: #EFEFEF;
+}
+
+.trader {
+  padding: 10px;
+}
+
+.trader .basic-info {
+  max-width: 250px;
+}
+
+.block {
+  float: left;
+  margin-right: 20px;
+}
+
+.text-label {
+  font-size: 10px;
+  color: #777;
+  text-transform: uppercase;
+}
+
+img {
+  display: inline-block;
+}

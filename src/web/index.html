@@ -3,15 +3,71 @@
   <head>
     <script src="https://fb.me/react-0.13.3.js"></script>
     <script src="https://fb.me/JSXTransformer-0.13.3.js"></script>
-	<link rel="stylesheet" type="text/css" href="/css/main.css">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="/css/main.css">
   </head>
   <body>
+
     <div id="example"></div>
+
+
+
     <script type="text/jsx">
-      React.render(
-        <h1>Hello, world!</h1>,
-        document.getElementById('example')
-      );
+    var TraderLine = React.createClass({
+      render: function() {
+        return (
+          <div className="trader clearfix">
+            <div className="block">
+              <img src="/img/trader1.jpg" className="img-thumbnail"/>
+            </div>
+
+            <div className="block basic-info">
+              <h2>PTC Systems</h2>
+              <p className="text-muted">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium</p>
+            </div>
+
+            <div className="block">
+            <span className="text-label">Amount following</span><br/>
+            <span>$999</span><br/>
+
+            <span className="text-label">People following</span><br/>
+            <span>565</span><br/>
+
+            <span className="text-label">ROI</span><br/>
+            <span>267%</span>
+            </div>
+
+            <div className="block">
+              <button type="submit" className="btn btn-primary">Follow</button>
+            </div>
+          </div>
+        );
+      }
+    });
+
+    var TraderList = React.createClass({
+      render: function() {
+        var traderNodes = [
+        <TraderLine/>, <TraderLine/>, <TraderLine/>
+        ];
+
+        return (
+          <div className="trader-list">
+            {traderNodes}
+          </div>
+        );
+      }
+    });
+
+
+    React.render(
+      <TraderList/>,
+      document.getElementById('example')
+    );
+
     </script>
   </body>
 </html>
