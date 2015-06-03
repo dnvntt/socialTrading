@@ -12,7 +12,7 @@ public class ApiHandler {
         final ObjectMapper mapper = new ObjectMapper();
 
         // FIXME: This should be removed when we extract the frontend code to its own application
-        Spark.externalStaticFileLocation("src/web");
+        Spark.externalStaticFileLocation("src/web/dist");
         String PREFIX = "/api";
 
         // Return all traders
