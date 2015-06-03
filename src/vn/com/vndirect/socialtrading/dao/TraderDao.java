@@ -49,6 +49,8 @@ public class TraderDao {
         trader.setCash(rs.getFloat("cash"));
         trader.setMoneyFollow(rs.getFloat("monneyfollow"));
         trader.setNumberFollow(rs.getInt("numberfollow"));
+        trader.setName(rs.getString("name"));
+        trader.setUsername(rs.getString("username"));
 
         return trader;
     }
