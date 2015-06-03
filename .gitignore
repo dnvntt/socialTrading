@@ -6,3 +6,5 @@
 ors-client-api.log
 *.class
 /.settings/
+/.vagrant/
+/src/web/build/
