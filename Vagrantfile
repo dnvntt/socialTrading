@@ -2,7 +2,10 @@
 # vi: set ft=ruby :
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "chef/centos-6.5"
+  config.vm.box = "chef/centos-7.0"
+#  config.vm.provider "virtualbox" do |v|
+#    v.gui = true
+#  end
 
 #  config.vm.network "forwarded_port", guest: 15672, host: 15672
   config.vm.network "public_network"
