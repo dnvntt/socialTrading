@@ -5,7 +5,7 @@ deps:
 	bower install
 
 dir:
-	mkdir -p dist
+	mkdir -p dist/js
 	mkdir -p .tmp
 
 js: dir

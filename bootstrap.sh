@@ -13,7 +13,7 @@ yum groupinstall -y 'Development Tools'
 # NodeJS
 curl -sL https://rpm.nodesource.com/setup | bash -
 yum install -y nodejs
-npm install -g react-tools bower
+npm install -g react-tools bower browserify
 
 
 # Installing RabbitMQ
