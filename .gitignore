@@ -9,6 +9,5 @@ ors-client-api.log
 /.vagrant/
 /src/web/build/
 node_modules/
-bower_components/
 .tmp
 /src/web/dist
