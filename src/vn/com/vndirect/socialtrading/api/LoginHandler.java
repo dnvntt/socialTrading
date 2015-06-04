@@ -14,11 +14,10 @@ import vn.com.vndirect.socialtrading.dao.LoginDao;
 import vn.com.vndirect.socialtrading.entity.Follower;
 import vn.com.vndirect.socialtrading.entity.Following;
 
-public class LoginHandler {
+public class LoginHandler extends AbstractHandler {
 	public LoginHandler() {
 		final ObjectMapper mapper = new ObjectMapper();
-		String PREFIX = "/api";
-		 
+
 		Spark.post(PREFIX + "/login", new Route() {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {

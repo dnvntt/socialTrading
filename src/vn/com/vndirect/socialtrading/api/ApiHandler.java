@@ -15,10 +15,9 @@ import vn.com.vndirect.socialtrading.dao.TraderDao;
 import vn.com.vndirect.socialtrading.entity.Trader;
 
 
-public class ApiHandler {
+public class ApiHandler extends AbstractHandler {
     public ApiHandler() {
         final ObjectMapper mapper = new ObjectMapper();
-        String PREFIX = "/api";
 
         // Return all traders
         Spark.get(PREFIX + "/traders", new Route() {
