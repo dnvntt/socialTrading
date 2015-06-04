@@ -1,0 +1,47 @@
+- POST /login
+  @param username
+  @param password
+
+- GET /session
+  Session details
+  @return {
+    role: "trader"/"follower",
+    accountId,
+  }
+
+- DELETE /session
+  Logout
+
+- GET /followers
+  Get all followers
+
+- GET /follower/:id
+  Get a single follower
+
+- PUT /follower/:id
+  Update a follower
+
+- GET /follower/:id/following
+  Get a list of traders this account is following
+  @return [1234, 456, 64545]
+
+- GET /follower/:id/following/:traderId
+  Get the details of the following relationship
+  @return {
+    allocatedMoney: 3434,
+    maxOpenSlots: 4
+  }
+
+- POST /follower/:id/following/
+  Follow a trader
+  @param traderId
+
+- DELETE /follower/:id/following/:traderId
+  Unfollow a trader
+
+- GET /traders
+  @return [
+  {id: 123, name: "Mr. A"}, {id: 124, name: "Mr. B"},
+  ]
+- GET /trader/:id
+- GET /trader/:id/followers
