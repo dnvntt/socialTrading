@@ -6,7 +6,7 @@ var _ = require("underscore");
 
 
 var Traders = Backbone.Collection.extend({
-    url: "/api/traders"
+    url: "/api/v1/traders"
 });
 
 var traders = new Traders();
