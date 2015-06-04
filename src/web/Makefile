@@ -22,3 +22,9 @@ build: js css
 clean:
 	rm -rf dist
 	rm -rf .tmp
+
+watch:
+	while true; do \
+		make ; \
+		inotifywait -qre close_write .; \
+	done
