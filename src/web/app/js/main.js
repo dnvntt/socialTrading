@@ -2,7 +2,10 @@
 
 var React = require("react");
 var Backbone = require("backbone");
+var $ = require("jquery");
 var _ = require("underscore");
+var Bootstrap = require("bootstrap-sass");
+var BootstrapSlider = require("bootstrap-slider");
 
 
 var Traders = Backbone.Collection.extend({
@@ -51,6 +54,28 @@ var TraderLine = React.createClass({
     }
 });
 
+var Slider = React.createClass({
+    componentDidMount: function() {
+        $(React.findDOMNode(this.refs.haha)).slider({
+            formatter: function(value) {
+                return 'Current value: ' + value;
+            }
+        });
+    },
+
+    render: function() {
+        return (
+            <input ref="haha"
+            data-slider-id='ex1Slider' 
+            type="text" 
+            data-slider-min="0"
+            data-slider-max="20"
+            data-slider-step="1"
+            data-slider-value="14"/>
+        );
+    }
+});
+
 var TraderList = React.createClass({
     componentDidMount: function() {
         var _this = this;
@@ -69,6 +94,7 @@ var TraderList = React.createClass({
 
         return (
             <div className="trader-list">
+            <Slider/>
             {nodes}
             </div>
         );

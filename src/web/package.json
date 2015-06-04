@@ -1,18 +1,30 @@
 {
   "private": true,
-
   "scripts": {
     "build": "make"
   },
 
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+
+  "browserify-shim": {
+    "bootstrap-sass": {
+      "depends": ["jquery:jQuery"]
+    }
+  },
+
   "devDependencies": {
     "backbone": "^1.2.0",
+    "bootstrap-sass": "^3.3.4",
     "bootstrap-slider": "^4.8.2",
+    "browserify": "latest",
     "flux": "^2.0.3",
     "jquery": "^2.1.4",
+    "npm-css": "latest",
     "react": "^0.13.3",
-    "underscore": "^1.8.3",
-    "browserify": "latest",
-    "npm-css": "latest"
+    "underscore": "^1.8.3"
   }
 }

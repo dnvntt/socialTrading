@@ -5,11 +5,7 @@ import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
-import spark.Request;
-import spark.Response;
-import spark.Route;
-import spark.Session;
-import spark.Spark;
+import spark.*;
 import vn.com.vndirect.socialtrading.dao.LoginDao;
 import vn.com.vndirect.socialtrading.entity.Follower;
 import vn.com.vndirect.socialtrading.entity.Following;
@@ -17,6 +13,20 @@ import vn.com.vndirect.socialtrading.entity.Following;
 public class LoginHandler extends AbstractHandler {
 	public LoginHandler() {
 		final ObjectMapper mapper = new ObjectMapper();
+
+//		Spark.before(new Filter() {
+//			public void handle(Request request, Response response) throws Exception {
+//				// Check if the user is authenticated.
+//				// We only require authentication for the /api routes.
+//				if (request.pathInfo().startsWith(PREFIX) &&
+//						!request.pathInfo().equals(PREFIX + "/login")) {
+//					String id = request.session().attribute("id");
+//					if (id == null || id.isEmpty()) {
+//						Spark.halt(401, String.format("Please login at {0}/login", PREFIX));
+//					}
+//				}
+//			}
+//		});
 
 		Spark.post(PREFIX + "/login", new Route() {
 			public Object handle(Request request, Response response)
@@ -41,7 +51,7 @@ public class LoginHandler extends AbstractHandler {
 		Spark.get(PREFIX + "/account", new Route() {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
-				String followerId =request.session().attribute("id");
+				String followerId = request.session().attribute("id");
 				LoginDao dao = new LoginDao();
 				List<Following> followingList = dao.getAccount(followerId);
 				return mapper.writeValueAsString(followingList);
