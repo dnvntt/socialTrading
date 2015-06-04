@@ -1,15 +1,15 @@
 package vn.com.vndirect.socialtrading.entity;
 
-public class Trader {
+public class TraderEntity {
 	private String id;
 	private int numberFollow;
 	private float moneyFollow;
 	private float cash;
 	private float stockOnhandValue;
 
-	public Trader() {}
+	public TraderEntity() {}
 	
-	public Trader(String id1,int numberFollow1,float moneyFollow1,float cash1,float stockOnhandValue1)
+	public TraderEntity(String id1,int numberFollow1,float moneyFollow1,float cash1,float stockOnhandValue1)
 	{
 		id=id1;numberFollow= numberFollow1;cash=cash1; stockOnhandValue=stockOnhandValue1;
 	}

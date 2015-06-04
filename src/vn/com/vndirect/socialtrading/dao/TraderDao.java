@@ -11,10 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.collections.map.HashedMap;
-
 import vn.com.vndirect.socialtrading.Config;
-import vn.com.vndirect.socialtrading.entity.Trader;
+import vn.com.vndirect.socialtrading.entity.TraderEntity;
 
 public class TraderDao {
     private final Connection connection;
@@ -24,12 +22,12 @@ public class TraderDao {
                 Config.DB_URL, Config.DB_USERNAME, Config.DB_PASSWORD);
     }
 
-    public List<Trader> allTraders() throws SQLException {
+    public List<TraderEntity> allTraders() throws SQLException {
         ResultSet rs = connection.prepareStatement("SELECT * FROM trader").executeQuery();
-        List<Trader> traders = new ArrayList<Trader>();
+        List<TraderEntity> traders = new ArrayList<TraderEntity>();
 
         while (rs.next()) {
-            Trader t = parseTrader(rs);
+            TraderEntity t = parseTrader(rs);
             traders.add(t);
         }
 
@@ -38,12 +36,12 @@ public class TraderDao {
 
     // Might return null if no such trader is found
     // FIXME: throw an exception?
-    public Trader getTraderById(String id) throws SQLException {
+    public TraderEntity getTraderById(String id) throws SQLException {
         PreparedStatement query = connection.prepareStatement("SELECT * FROM trader WHERE traderid = ?");
         query.setString(1, id);
 
         ResultSet rs = query.executeQuery();
-        Trader t = null;
+        TraderEntity t = null;
         while (rs.next()) {
             t = parseTrader(rs);
         }
@@ -51,8 +49,8 @@ public class TraderDao {
         return t;
     }
 
-    private Trader parseTrader(ResultSet rs) throws SQLException {
-        Trader trader = new Trader();
+    private TraderEntity parseTrader(ResultSet rs) throws SQLException {
+        TraderEntity trader = new TraderEntity();
         trader.setId(rs.getString("traderid"));
         trader.setCash(rs.getFloat("cash"));
         trader.setMoneyFollow(rs.getFloat("monneyfollow"));

@@ -9,12 +9,17 @@ public class Follower {
 	private int currentOpen;
 	private float moneyAllocate;
 	private float currentAllocate;
-	private int riskfactor;
-	private float cash;
+
 	private Map <String,Integer> mapStockQuantityFollow = new HashMap<String, Integer>();
 	private Map <String,String> mapStockOrderFollow = new HashMap<String, String>();
 	
 	public Follower() {}
+	
+	public Follower(String id1,int maxopen1,int currentOpen1,float moneyAllocate1,float currentAllocate1,Map <String,Integer> mapStockQuantity1,Map <String,String> mapStockOrder1) 
+	{
+		id=id1;maxopen=maxopen1; currentOpen=currentOpen1;moneyAllocate=moneyAllocate1;currentAllocate=currentAllocate1;
+		mapStockQuantityFollow=mapStockQuantity1;mapStockOrderFollow= mapStockOrder1;
+	}
 	
 	public Map<String, String> getMapStockOrderFollow() {
 		return mapStockOrderFollow;
@@ -33,11 +38,6 @@ public class Follower {
 		this.mapStockQuantityFollow = mapStock;
 	}
 
-	public Follower(String id1,int maxopen1,int currentOpen1,float moneyAllocate1,float currentAllocate1,int riskfactor1,float cash1,Map <String,Integer> mapStockQuantity1,Map <String,String> mapStockOrder1) 
-	{
-		id=id1;maxopen=maxopen1; currentOpen=currentOpen1;moneyAllocate=moneyAllocate1;currentAllocate=currentAllocate1;
-		riskfactor=riskfactor1;cash=cash1; mapStockQuantityFollow=mapStockQuantity1;mapStockOrderFollow= mapStockOrder1;
-	}
 
 	public String getId() {
 		return id.trim();
@@ -78,21 +78,4 @@ public class Follower {
 	public void setCurrentAllocate(float currentAllocate) {
 		this.currentAllocate = currentAllocate;
 	}
-
-	public int getRiskfactor() {
-		return riskfactor;
-	}
-
-	public void setRiskfactor(int riskfactor) {
-		this.riskfactor = riskfactor;
-	}
-
-	public float getCash() {
-		return cash;
-	}
-
-	public void setCash(float cash) {
-		this.cash = cash;
-	}
-
 }

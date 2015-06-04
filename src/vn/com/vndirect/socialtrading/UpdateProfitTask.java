@@ -38,7 +38,7 @@ public class UpdateProfitTask extends TimerTask {
 				if (tempId == null)
 					tempId = curentId;
 				
-				if(!curentId.equals(tempId))
+				if(!curentId.equals(tempId) || rs.last())
 				{
 					 PreparedStatement query1 = connection.prepareStatement("SELECT * FROM portfolio  WHERE id = ? ");
 					
@@ -65,6 +65,8 @@ public class UpdateProfitTask extends TimerTask {
 					MoneyAccumulate += rs.getInt("quantity") * rs.getInt("price");
 			}
 			rs.close();
+			
+			
 
 		} catch (SQLException ex) {
 
