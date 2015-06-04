@@ -16,15 +16,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import spark.Spark;
 import vn.com.vndirect.ors.client.api.OrderService;
 import vn.com.vndirect.ors.client.api.OrderServiceImpl;
 import vn.com.vndirect.ors.client.api.entity.Report;
 import vn.com.vndirect.ors.client.api.utils.OrderException;
+import vn.com.vndirect.socialtrading.api.ApiHandler;
+import vn.com.vndirect.socialtrading.api.LoginHandler;
+import vn.com.vndirect.socialtrading.entity.ExecutedOrder;
+import vn.com.vndirect.socialtrading.entity.Follower;
+import vn.com.vndirect.socialtrading.entity.SendOrder;
+import vn.com.vndirect.socialtrading.entity.Trader;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -32,25 +41,29 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.ShutdownSignalException;
-import vn.com.vndirect.socialtrading.api.ApiHandler;
-import vn.com.vndirect.socialtrading.entity.ExecutedOrder;
-import vn.com.vndirect.socialtrading.entity.Follower;
-import vn.com.vndirect.socialtrading.entity.SendOrder;
-import vn.com.vndirect.socialtrading.entity.Trader;
 
 public class App {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws SQLException {
 		Config.loadConfig();
 		App app = null;
-
+		Spark.externalStaticFileLocation("src/web");
 		new ApiHandler();
+		new LoginHandler();
+		
+		TimerTask task = new UpdateProfitTask();
+		//TimerTask task = new RunMeTask();
+    	Timer timer = new Timer();
+    	timer.schedule(task, 1000,6000);
+    	
 		try {
 			app = new App();
 			app.run();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		
 	}
 
 	private ObjectMapper mapper;

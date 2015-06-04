@@ -1,13 +1,9 @@
 package vn.com.vndirect.socialtrading.test;
 
+import java.util.List;
 import org.junit.Test;
 import vn.com.vndirect.socialtrading.App;
 import vn.com.vndirect.socialtrading.entity.SendOrder;
-
-import java.util.List;
-
-import static org.junit.Assert.*;
-
 
 public class AppTest {
 

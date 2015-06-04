@@ -17,9 +17,9 @@ public class Config {
     public static String RABBIT_USERNAME = "noticenter";
     public static String RABBIT_PASSWORD = "abcd@123";
 
-    public static String DB_URL = "jdbc:postgresql://localhost:5432/postgres";
+    public static String DB_URL = "jdbc:postgresql://localhost:5432/zulu";
     public static String DB_USERNAME = "postgres";
-    public static String DB_PASSWORD = "1111";
+    public static String DB_PASSWORD = "123456";
 
     public static void loadConfig() {
         Properties props = new Properties();

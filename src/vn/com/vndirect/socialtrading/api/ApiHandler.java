@@ -1,7 +1,15 @@
 package vn.com.vndirect.socialtrading.api;
 
+import java.sql.Timestamp;
+import java.util.Map;
+
 import org.codehaus.jackson.map.ObjectMapper;
-import spark.*;
+
+import spark.ExceptionHandler;
+import spark.Request;
+import spark.Response;
+import spark.Route;
+import spark.Spark;
 import vn.com.vndirect.socialtrading.dao.NotFoundException;
 import vn.com.vndirect.socialtrading.dao.TraderDao;
 import vn.com.vndirect.socialtrading.entity.Trader;
@@ -10,9 +18,6 @@ import vn.com.vndirect.socialtrading.entity.Trader;
 public class ApiHandler {
     public ApiHandler() {
         final ObjectMapper mapper = new ObjectMapper();
-
-        // FIXME: This should be removed when we extract the frontend code to its own application
-        Spark.externalStaticFileLocation("src/web");
         String PREFIX = "/api";
 
         // Return all traders
@@ -31,6 +36,19 @@ public class ApiHandler {
 
                 if (trader != null) {
                     return mapper.writeValueAsString(trader);
+                } else {
+                    throw new NotFoundException();
+                }
+            }
+        });
+        
+        // Return  trader's history performance 
+        Spark.get(PREFIX + "/performance/:id", new Route() {
+            public Object handle(Request request, Response response) throws Exception {
+                TraderDao dao = new TraderDao();
+                Map<Timestamp,Float> result= dao.getTraderProfitMap(request.params(":id"));
+                if (result != null) {
+                    return mapper.writeValueAsString(result);
                 } else {
                     throw new NotFoundException();
                 }

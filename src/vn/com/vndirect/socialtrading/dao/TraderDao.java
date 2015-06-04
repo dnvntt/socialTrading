@@ -1,12 +1,20 @@
 package vn.com.vndirect.socialtrading.dao;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.collections.map.HashedMap;
 
 import vn.com.vndirect.socialtrading.Config;
 import vn.com.vndirect.socialtrading.entity.Trader;
-
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TraderDao {
     private final Connection connection;
@@ -51,5 +59,39 @@ public class TraderDao {
         trader.setNumberFollow(rs.getInt("numberfollow"));
 
         return trader;
+    }
+    
+    public float getTraderProfitAccumulate(String id ) throws SQLException {
+        PreparedStatement query = connection.prepareStatement("SELECT * FROM history, orderlist  WHERE id = ? and history.orderid = orderlist.orderid order by history.date asc");
+        query.setString(1, id);
+        float MoneyAccumulate =0;
+        ResultSet rs = query.executeQuery();
+        
+        while (rs.next()) {
+        	if(rs.getInt("side") ==1)
+        	   MoneyAccumulate -= rs.getInt("quantity")  * rs.getInt("price");
+        	else
+        		MoneyAccumulate += rs.getInt("quantity")  * rs.getInt("price");
+        }
+        query = connection.prepareStatement("SELECT * FROM portfolio  WHERE id = ? ");
+        query.setString(1, id);
+        while (rs.next()) {
+        	   MoneyAccumulate += rs.getInt("quantity")  * rs.getInt("cost");
+        }
+        
+        return MoneyAccumulate;
+    }
+    
+    public Map<Timestamp,Float> getTraderProfitMap(String id ) throws SQLException {
+    	PreparedStatement query = connection.prepareStatement("SELECT * FROM accumulate WHERE id = ?  order by date asc");
+        query.setString(1, id);
+        Map<Timestamp,Float> MoneyAccumulateMap = new HashMap<Timestamp, Float>();
+        ResultSet rs = query.executeQuery();
+        
+        while (rs.next()) {
+        	MoneyAccumulateMap.put(rs.getTimestamp("date"), rs.getFloat("profit"));
+        }
+        
+        return MoneyAccumulateMap;
     }
 }
