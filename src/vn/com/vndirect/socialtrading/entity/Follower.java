@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Follower {
-	// private String followerid;
 	private String id;
 	private int maxopen;
 	private int currentOpen;
@@ -14,6 +13,8 @@ public class Follower {
 	private float cash;
 	private Map <String,Integer> mapStockQuantityFollow = new HashMap<String, Integer>();
 	private Map <String,String> mapStockOrderFollow = new HashMap<String, String>();
+	
+	public Follower() {}
 	
 	public Map<String, String> getMapStockOrderFollow() {
 		return mapStockOrderFollow;
