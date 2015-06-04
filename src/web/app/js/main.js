@@ -1,13 +1,5 @@
 'use strict';
 
-var React = require("react");
-var Backbone = require("backbone");
-var $ = require("jquery");
-var _ = require("underscore");
-var Bootstrap = require("bootstrap-sass");
-var BootstrapSlider = require("bootstrap-slider");
-
-
 var Traders = Backbone.Collection.extend({
     url: "/api/v1/traders"
 });
