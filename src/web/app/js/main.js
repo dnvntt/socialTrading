@@ -4,7 +4,12 @@ var Traders = Backbone.Collection.extend({
     url: "/api/v1/traders"
 });
 
+var dispatcher = new Flux.Dispatcher();
 var traders = new Traders();
+
+dispatcher.register(function(message) {
+    console.log(message);
+});
 
 
 var TraderLine = React.createClass({
@@ -13,7 +18,6 @@ var TraderLine = React.createClass({
     },
 
     render: function() {
-        console.log(this.props.trader);
         return (
             <div className="trader clearfix">
             <div className="block">
@@ -46,24 +50,34 @@ var TraderLine = React.createClass({
     }
 });
 
-var Slider = React.createClass({
-    componentDidMount: function() {
-        $(React.findDOMNode(this.refs.haha)).slider({
-            formatter: function(value) {
-                return 'Current value: ' + value;
-            }
-        });
+var RiskSlider = React.createClass({
+    // TODO: Detect when the user stops sliding then send the new value to server
+    getInitialState: function() {
+        return {
+            value: 50  
+        };
+    },
+
+    onChange: function(event) {
+        var newValue = event.target.value;
+        if (newValue != this.state.value) {
+            this.setState({value: event.target.value});
+            dispatcher.dispatch({
+                type: "risk-factor-changed",
+                value: event.target.value
+            });
+        }
     },
 
     render: function() {
         return (
-            <input ref="haha"
-            data-slider-id='ex1Slider' 
-            type="text" 
-            data-slider-min="0"
-            data-slider-max="20"
-            data-slider-step="1"
-            data-slider-value="14"/>
+            <input ref="self"
+            type="range"
+            min="10"
+            max="100"
+            step="10"
+            value={this.state.value}
+            onChange={this.onChange}/>
         );
     }
 });
@@ -72,7 +86,6 @@ var TraderList = React.createClass({
     componentDidMount: function() {
         var _this = this;
         this.props.traders.on("add remove reset", function() {
-            console.log("New data");
             _this.forceUpdate();
         });
     },
@@ -86,8 +99,8 @@ var TraderList = React.createClass({
 
         return (
             <div className="trader-list">
-            <Slider/>
-            {nodes}
+                <RiskSlider/>
+                {nodes}
             </div>
         );
     }
