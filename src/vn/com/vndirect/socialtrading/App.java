@@ -47,7 +47,7 @@ public class App {
 	public static void main(String[] args) throws SQLException {
 		Config.loadConfig();
 		App app = null;
-		Spark.externalStaticFileLocation("src/web");
+		Spark.externalStaticFileLocation("src/web/dist");
 		new ApiHandler();
 		new LoginHandler();
 		
