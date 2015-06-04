@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.collections.map.HashedMap;
-
 import vn.com.vndirect.socialtrading.Config;
 import vn.com.vndirect.socialtrading.entity.Trader;
 
