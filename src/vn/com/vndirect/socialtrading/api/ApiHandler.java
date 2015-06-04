@@ -12,7 +12,7 @@ import spark.Route;
 import spark.Spark;
 import vn.com.vndirect.socialtrading.dao.NotFoundException;
 import vn.com.vndirect.socialtrading.dao.TraderDao;
-import vn.com.vndirect.socialtrading.entity.Trader;
+import vn.com.vndirect.socialtrading.entity.TraderEntity;
 
 
 public class ApiHandler extends AbstractHandler {
@@ -31,7 +31,7 @@ public class ApiHandler extends AbstractHandler {
         Spark.get(PREFIX + "/trader/:id", new Route() {
             public Object handle(Request request, Response response) throws Exception {
                 TraderDao dao = new TraderDao();
-                Trader trader = dao.getTraderById(request.params(":id"));
+                TraderEntity trader = dao.getTraderById(request.params(":id"));
 
                 if (trader != null) {
                     return mapper.writeValueAsString(trader);
@@ -41,7 +41,7 @@ public class ApiHandler extends AbstractHandler {
             }
         });
         
-        // Return  trader's history performance 
+        // Return  trader or follower 's history performance 
         Spark.get(PREFIX + "/performance/:id", new Route() {
             public Object handle(Request request, Response response) throws Exception {
                 TraderDao dao = new TraderDao();
