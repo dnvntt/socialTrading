@@ -1,10 +1,18 @@
 {
   "private": true,
+
+  "scripts": {
+    "build": "make"
+  },
+
   "devDependencies": {
     "backbone": "^1.2.0",
+    "bootstrap-slider": "^4.8.2",
     "flux": "^2.0.3",
     "jquery": "^2.1.4",
     "react": "^0.13.3",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "browserify": "latest",
+    "npm-css": "latest"
   }
 }

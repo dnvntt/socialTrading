@@ -5,19 +5,20 @@ deps:
 	bower install
 
 dir:
-	mkdir -p dist/js
+	mkdir -p dist/scripts
+	mkdir -p dist/styles
 	mkdir -p .tmp
 
 js: dir
 	jsx app/js .tmp/js
-	browserify .tmp/js/main.js -o dist/js/bundle.js
+	browserify .tmp/js/main.js -o dist/scripts/bundle.js
 
-build: js
-	mkdir -p dist
+css: dir
+	npm-css app/styles/main.css > dist/styles/bundle.css
+
+build: js css
 	cp app/index.html dist
 	cp -rf app/img dist
-	cp -rf app/styles dist
-	cp -rf bower_components dist
 
 clean:
 	rm -rf dist
