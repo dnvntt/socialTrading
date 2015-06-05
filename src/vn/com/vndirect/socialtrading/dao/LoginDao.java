@@ -31,7 +31,7 @@ public class LoginDao {
 		stmt.setString(2, password1);
 
 		ResultSet rs = stmt.executeQuery();
-		FollowerEntity follower = null;
+		FollowerEntity follower = new FollowerEntity();
 		while (rs.next()) {
 			follower = parseFollowerEntity(rs);
 		}
@@ -71,31 +71,38 @@ public class LoginDao {
 		return following;
 	}
 
-	public void followTrader(String followerId, String traderrId, int money,
+	public void followTrader(String followerId, String traderId, int money,
 			int maxOpen) throws SQLException {
 		PreparedStatement stmt = connection
-				.prepareStatement("insert into  following (id,traderid,moneyallocate,maxopen,transactionid) VALUES (?,?,?,?);");
-		String transactionId = followerId + "_" + traderrId;
+				.prepareStatement("insert into  following (id,traderid,moneyallocate,maxopen,transactionid) VALUES (?,?,?,?,?);");
+		String transactionId = followerId + "_" + traderId;
 		stmt.setString(1, followerId);
-		stmt.setString(2, traderrId);
+		stmt.setString(2, traderId);
 		stmt.setInt(3, money);
 		stmt.setInt(4, maxOpen);
 		stmt.setString(5, transactionId);
-		stmt.executeQuery();
+		try{
+			stmt.executeUpdate();
+		}
+		catch(Exception e){
+			stmt.close();
+			return;
+		}
 		stmt.close();
-		TraderEntity trader = App.listOfTraderEntity.get(traderrId);
+		TraderEntity trader = App.listOfTraderEntity.get(traderId);
 		int curentFollow = trader.getNumberFollow();
 		float curentMoneyfollow = trader.getNumberFollow();
-
-		List<Follower> listFollower = App.mapOfTrader.get(traderrId);
 		
-		Follower follower = null;
+		if(! App.mapOfTrader.containsKey(traderId)) App.mapOfTrader.put(traderId,  new ArrayList<Follower>());
+		List<Follower> listFollower = App.mapOfTrader.get(traderId);
+		
+		Follower follower = new Follower();
 		follower.setId(followerId);
 		follower.setCurrentOpen(0);follower.setCurrentAllocate(0);
 		follower.setMaxopen(maxOpen);follower.setMoneyAllocate(money);
 		follower.setMapStockOrderFollow(new HashMap<String, String>());
 		follower.setMapStockQuantityFollow(new HashMap<String, Integer>());
-
+		
 		listFollower.add(follower);
 		
 		trader.setMoneyFollow(money + curentMoneyfollow);
@@ -105,25 +112,26 @@ public class LoginDao {
 				.prepareStatement("update trader set numberfollow=?, monneyfollow =? where traderid=?;");
 		stmt1.setInt(1, 1 + curentFollow);
 		stmt1.setFloat(2, money + curentMoneyfollow);
-		stmt1.setString(3, traderrId);
-		stmt1.executeQuery();
+		stmt1.setString(3, traderId);
+		stmt1.executeUpdate();
 		stmt1.close();
 	}
 
-	public void unfollowTrader(String followerId, String traderrId)
+	public void unfollowTrader(String followerId, String traderId)
 			throws SQLException {
 		PreparedStatement stmt = connection
 				.prepareStatement("delete from following where id=? and traderid=?");
 		stmt.setString(1, followerId);
-		stmt.setString(2, traderrId);
-		stmt.executeQuery();
+		stmt.setString(2, traderId);
+		stmt.executeUpdate();
 		stmt.close();
 
-		TraderEntity trader = App.listOfTraderEntity.get(traderrId);
+		TraderEntity trader = App.listOfTraderEntity.get(traderId);
 		int curentFollow = trader.getNumberFollow();
-		float curentMoneyfollow = trader.getNumberFollow();
-		Follower folower = null;
-		List<Follower> listFollower = App.mapOfTrader.get(traderrId);
+		float curentMoneyfollow = trader.getMoneyFollow();
+		
+		Follower folower = new Follower();
+		List<Follower> listFollower = App.mapOfTrader.get(traderId);
 		for (Follower f : listFollower) {
 			if (f.getId().equals(followerId)) {
 				folower = f;
@@ -138,8 +146,8 @@ public class LoginDao {
 				.prepareStatement("update trader set numberfollow=?, monneyfollow =? where traderid=?;");
 		stmt1.setInt(1, curentFollow - 1);
 		stmt1.setFloat(2, curentMoneyfollow - folower.getMoneyAllocate());
-		stmt1.setString(3, traderrId);
-		stmt1.executeQuery();
+		stmt1.setString(3, traderId);
+		stmt1.executeUpdate();
 		stmt1.close();
 	}
 
@@ -149,7 +157,7 @@ public class LoginDao {
 				.prepareStatement("update account set risk_factor = ? where id=? ");
 		stmt.setInt(1, riskValue);
 		stmt.setString(2, followerId);
-		stmt.executeQuery();
+		stmt.executeUpdate();
 		stmt.close();
 		
 		FollowerEntity follower = App.listOfFollowerEntity.get(followerId);

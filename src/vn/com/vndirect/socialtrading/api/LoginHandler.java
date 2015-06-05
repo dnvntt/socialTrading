@@ -48,14 +48,13 @@ public class LoginHandler extends AbstractHandler {
 		});
 
 		// get account info api e.g. /account
-		Spark.get(PREFIX + "/follower/account", new Route() {
+		Spark.get(PREFIX + "/follower/:id", new Route() {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
-				String followerId = request.session().attribute("id");
+				String followerId = request.params(":id");
 				LoginDao dao = new LoginDao();
 				List<Following> followingList = dao.getAccount(followerId);
 				return mapper.writeValueAsString(followingList);
-
 			}
 		});
 
@@ -63,8 +62,7 @@ public class LoginHandler extends AbstractHandler {
 		Spark.post(PREFIX + "/follower/:id/follow", new Route() {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
-				String followerId =request.queryParams(":id");
-
+				String followerId =request.params(":id");
 				String traderId = request.queryParams("traderid");
 				int moneyAllocate = Integer.parseInt(request
 						.queryParams("money"));
@@ -83,7 +81,7 @@ public class LoginHandler extends AbstractHandler {
 			public Object handle(Request request, Response response)
 					throws Exception {
 				String traderId = request.params(":traderid");
-				String followerId = request.queryParams(":id");
+				String followerId = request.params(":id");
 				
 				LoginDao dao = new LoginDao();
 				dao.unfollowTrader(followerId, traderId);
