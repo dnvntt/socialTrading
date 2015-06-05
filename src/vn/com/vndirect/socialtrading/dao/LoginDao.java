@@ -16,7 +16,7 @@ import vn.com.vndirect.socialtrading.entity.FollowerEntity;
 import vn.com.vndirect.socialtrading.entity.Following;
 import vn.com.vndirect.socialtrading.entity.TraderEntity;
 
-public class LoginDao {
+public class LoginDao implements Dao<FollowerEntity, String> {
 	private final Connection connection;
 
 	public LoginDao() throws SQLException {
@@ -24,7 +24,7 @@ public class LoginDao {
 				Config.DB_USERNAME, Config.DB_PASSWORD);
 	}
 
-	public FollowerEntity getUser(String user1, String password1) throws SQLException {
+	public FollowerEntity authenticate(String user1, String password1) throws SQLException {
 		PreparedStatement stmt = connection
 				.prepareStatement("SELECT * FROM account where  username =? and password =?");
 		stmt.setString(1, user1);
@@ -32,6 +32,20 @@ public class LoginDao {
 
 		ResultSet rs = stmt.executeQuery();
 		FollowerEntity follower = new FollowerEntity();
+		while (rs.next()) {
+			follower = parseFollowerEntity(rs);
+		}
+
+		return follower;
+	}
+
+	public FollowerEntity getFollower(String id) throws SQLException {
+		PreparedStatement stmt = connection
+				.prepareStatement("SELECT * FROM account where  username =? and password =?");
+		stmt.setString(1, id);
+
+		ResultSet rs = stmt.executeQuery();
+		FollowerEntity follower = null;
 		while (rs.next()) {
 			follower = parseFollowerEntity(rs);
 		}
@@ -126,6 +140,7 @@ public class LoginDao {
 		stmt.executeUpdate();
 		stmt.close();
 
+		// FIXME: NPE here
 		TraderEntity trader = App.listOfTraderEntity.get(traderId);
 		int curentFollow = trader.getNumberFollow();
 		float curentMoneyfollow = trader.getMoneyFollow();
@@ -151,16 +166,75 @@ public class LoginDao {
 		stmt1.close();
 	}
 
-	public void updateRiskFactor(String followerId, int riskValue)
-			throws SQLException {
-		PreparedStatement stmt = connection
-				.prepareStatement("update account set risk_factor = ? where id=? ");
-		stmt.setInt(1, riskValue);
-		stmt.setString(2, followerId);
-		stmt.executeUpdate();
-		stmt.close();
-		
-		FollowerEntity follower = App.listOfFollowerEntity.get(followerId);
-		follower.setRiskfactor(riskValue);
+	public List<FollowerEntity> all() {
+		List<FollowerEntity> followers = new ArrayList<FollowerEntity>();
+
+		try {
+			ResultSet rs = connection
+					.createStatement()
+					.executeQuery("SELECT * FROM account");
+
+			while(rs.next()) {
+				FollowerEntity f = parseFollowerEntity(rs);
+				followers.add(f);
+			}
+
+		} catch (SQLException e) {
+			// FIXME: Log this error
+			e.printStackTrace();
+		}
+
+		return followers;
+	}
+
+	public FollowerEntity get(String id) throws NotFoundException {
+		FollowerEntity f = null;
+
+		try {
+			PreparedStatement query = connection
+					.prepareStatement("SELECT * from account WHERE id = ?");
+			query.setString(1, id);
+
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				f = parseFollowerEntity(rs);
+			}
+
+			if (f == null) {
+				throw new NotFoundException();
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return f;
+	}
+
+	public boolean save(FollowerEntity object) {
+		try {
+			PreparedStatement updateStatement = connection
+					.prepareStatement("UPDATE account SET cash = ?, risk_factor = ? WHERE id = ?");
+			updateStatement.setFloat(1, object.getCash());
+			updateStatement.setInt(2, object.getRiskfactor());
+			updateStatement.setString(3, object.getId());
+
+			int count = updateStatement.executeUpdate();
+
+			return count == 1;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean insert(FollowerEntity object) {
+		// FIXME: Implementation
+		return false;
+	}
+
+	public boolean delete(FollowerEntity object) {
+		// FIXME: Implementation
+		return false;
 	}
 }

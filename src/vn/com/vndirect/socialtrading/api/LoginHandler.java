@@ -34,7 +34,7 @@ public class LoginHandler extends AbstractHandler {
 				String user = request.queryParams("user");
 				String password = request.queryParams("pass");
 				LoginDao dao = new LoginDao();
-				FollowerEntity follower = dao.getUser(user, password);
+				FollowerEntity follower = dao.authenticate(user, password);
 				if (follower.equals(null)) {
 					response.status(404);
 					return "Fail";
@@ -47,8 +47,17 @@ public class LoginHandler extends AbstractHandler {
 			}
 		});
 
-		// get account info api e.g. /account
-		Spark.get(PREFIX + "/follower/:id", new Route() {
+		Spark.get(PREFIX + "/me", new Route() {
+			public Object handle(Request request, Response response) throws Exception {
+				LoginDao dao = new LoginDao();
+				System.out.println(request.session().attribute("id"));
+				FollowerEntity follower = dao.get((String) request.session().attribute("id"));
+				return mapper.writeValueAsString(follower);
+			}
+		});
+
+		// List all traders this follower is following
+		Spark.get(PREFIX + "/follower/:id/following", new Route() {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
 				String followerId = request.params(":id");
@@ -58,12 +67,13 @@ public class LoginHandler extends AbstractHandler {
 			}
 		});
 
-		// follow trader api
-		Spark.post(PREFIX + "/follower/:id/follow", new Route() {
+		// follow a trader
+		Spark.post(PREFIX + "/follower/:id/following", new Route() {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
-				String followerId =request.params(":id");
+				String followerId = request.params(":id");
 				String traderId = request.queryParams("traderid");
+
 				int moneyAllocate = Integer.parseInt(request
 						.queryParams("money"));
 				int maxOpen = Integer.parseInt(request.queryParams("maxopen"));
@@ -76,13 +86,13 @@ public class LoginHandler extends AbstractHandler {
 			}
 		});
 
-		// unfollow trader api
-		Spark.get(PREFIX + "/follower/:id/unfollow/:traderid", new Route() {
+		// unfollow a trader
+		Spark.delete(PREFIX + "/follower/:id/following/:traderid", new Route() {
 			public Object handle(Request request, Response response)
 					throws Exception {
 				String traderId = request.params(":traderid");
 				String followerId = request.params(":id");
-				
+
 				LoginDao dao = new LoginDao();
 				dao.unfollowTrader(followerId, traderId);
 
@@ -90,19 +100,31 @@ public class LoginHandler extends AbstractHandler {
 				return "ok";
 			}
 		});
-		
+
+		// Update a follower
 		Spark.put(PREFIX + "/follower/:id", new Route() {
 			public Object handle(Request request, Response response)
 					throws Exception {
-
-				int newRiskFactor = Integer.parseInt(request.queryParams("riskfactor"));
-				String followerId = request.params(":id");
+				if (!request.params(":id").equals(request.session().attribute("id"))) {
+					Spark.halt(401);
+				}
 
 				LoginDao dao = new LoginDao();
-				dao.updateRiskFactor(followerId, newRiskFactor);
 
-				response.status(200);
-				return "ok";
+				FollowerEntity current = dao.getFollower(request.params(":id"));
+				FollowerEntity updated = mapper.readValue(request.body(), FollowerEntity.class);
+
+				// TODO: Validation. Null check.
+				updated.setId(current.getId());
+				boolean ok = dao.save(updated);
+
+				if (ok) {
+					response.status(200);
+					return "Ok.";
+				} else {
+					response.status(500);
+					return "Error, please ask the admin to check the log.";
+				}
 			}
 		});
 
