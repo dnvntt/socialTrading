@@ -4,8 +4,28 @@ var Traders = Backbone.Collection.extend({
     url: "/api/v1/traders"
 });
 
+var FollowingRels = Backbone.Collection.extend({
+    model: Backbone.Model.extend({
+        idAttribute: "traderId"
+    })
+});
+
+var Follower = Backbone.Model.extend({
+    initialize: function() {
+        var _this = this;
+        this.on("change", function() {
+            _this.followingTraders = new FollowingRels();
+            _this.followingTraders.url = "/api/v1/follower/" + _this.id + "/following";
+            _this.followingTraders.fetch();
+        });
+    },
+});
+
 var dispatcher = new Flux.Dispatcher();
 var traders = new Traders();
+var me = new Follower();
+me.url = "/api/v1/me";
+me.fetch();
 
 dispatcher.register(function(message) {
     console.log(message);
@@ -13,11 +33,27 @@ dispatcher.register(function(message) {
 
 
 var TraderLine = React.createClass({
+    componentDidMount: function() {
+        var _this = this;
+        this.props.trader.on("change", function () {
+            console.log("trader updated");
+            _this.forceUpdate();
+        });
+    },
+
     follow: function() {
         alert("Following trader " + this.props.trader.id)
     },
 
     render: function() {
+        if (me.followingTraders) {
+            var isFollowing = me.followingTraders.get(this.props.trader.id);
+            var followBtnClasses = "btn " + isFollowing ? "btn-danger" : "btn-primary";
+            console.log(isFollowing);
+        } else {
+            var followBtnClasses = "btn btn-primary";
+        }
+
         return (
             <div className="trader clearfix">
             <div className="block">
@@ -42,7 +78,7 @@ var TraderLine = React.createClass({
 
             <div className="block">
             <button type="submit" 
-            className="btn btn-primary"
+            className={followBtnClasses}
             onClick={this.follow}>Follow</button>
             </div>
             </div>
@@ -85,7 +121,7 @@ var RiskSlider = React.createClass({
 var TraderList = React.createClass({
     componentDidMount: function() {
         var _this = this;
-        this.props.traders.on("add remove reset", function() {
+        this.props.traders.on("change add remove reset", function() {
             _this.forceUpdate();
         });
     },
