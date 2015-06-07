@@ -1,6 +1,9 @@
 package vn.com.vndirect.socialtrading;
 
 
+import vn.com.vndirect.ors.client.api.utils.FileUtil;
+
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -22,14 +25,9 @@ public class Config {
     public static String DB_PASSWORD = "123456";
 
     public static void loadConfig() {
-        Properties props = new Properties();
-
         try {
-            InputStream configStream = Config.class.getClassLoader().getResourceAsStream("config.properties");
-            if (configStream == null) {
-                return;
-            }
-            props.load(configStream);
+            Properties props = new Properties();
+            props.load(new FileInputStream("config/config.properties"));
 
             String[] keys = new String[] {
                     "QUEUE_NAME_SENT",
