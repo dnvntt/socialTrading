@@ -3,11 +3,12 @@
 /target/
 /fixlog/
 /store/
-ors-client-api.log
 *.class
 /.settings/
 /.vagrant/
 /src/web/build/
 node_modules/
 .tmp
-/src/web/dist
+/src/main/webapp/dist
+*.log
+*.bak
