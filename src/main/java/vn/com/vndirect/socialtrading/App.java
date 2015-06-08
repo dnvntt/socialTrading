@@ -48,14 +48,14 @@ public class App {
 	public static void main(String[] args) throws SQLException {
 		Config.loadConfig();
 		App app = null;
-		Spark.externalStaticFileLocation("src/web/dist");
+		Spark.externalStaticFileLocation("src/main/webapp/dist");
 		new ApiHandler();
 		new LoginHandler();
 		
 		TimerTask task = new UpdateProfitTask();
     	Timer timer = new Timer();
     	timer.schedule(task, 1000,6000);
-    	
+
 		try {
 			app = new App();
 			app.run();

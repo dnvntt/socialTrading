@@ -16,6 +16,8 @@
 			<groupId>vn.com.vndirect.ors</groupId>
 			<artifactId>ors-client-api</artifactId>
 			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/bin/ors-client-api-1.0.0.jar</systemPath>
 		</dependency>
 
 		<dependency>
@@ -49,16 +51,4 @@
 		</dependency>
 
 	</dependencies>
-
-	<build>
-		<sourceDirectory>src</sourceDirectory>
-		<resources>
-			<resource>
-				<directory>src</directory>
-				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
-			</resource>
-		</resources>
-	</build>
 </project>
