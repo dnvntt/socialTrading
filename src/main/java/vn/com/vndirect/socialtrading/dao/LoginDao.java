@@ -31,7 +31,7 @@ public class LoginDao implements Dao<FollowerEntity, String> {
 		stmt.setString(2, password1);
 
 		ResultSet rs = stmt.executeQuery();
-		FollowerEntity follower = new FollowerEntity();
+		FollowerEntity follower = null;
 		while (rs.next()) {
 			follower = parseFollowerEntity(rs);
 		}
