@@ -22,7 +22,7 @@ public class UpdateProfitTask extends TimerTask {
 		//Calendar rightNow = Calendar.getInstance();
 		//int hour = rightNow.get(Calendar.HOUR_OF_DAY);
 		//if(hour <16 || hour >17 ) return; //update accumulated profit for each trader from 4pm to 5pm every day
-		
+		//System.out.println("Run here.....");
 		try {
 			PreparedStatement query = connection
 					.prepareStatement("SELECT * FROM history, orderlist  WHERE history.orderid = orderlist.orderid order by id asc, history.date asc");
@@ -38,7 +38,7 @@ public class UpdateProfitTask extends TimerTask {
 				if (tempId == null)
 					tempId = curentId;
 				
-				if(!curentId.equals(tempId) || rs.last())
+				if(!curentId.equals(tempId) || rs.isLast())
 				{
 					 PreparedStatement query1 = connection.prepareStatement("SELECT * FROM portfolio  WHERE id = ? ");
 					

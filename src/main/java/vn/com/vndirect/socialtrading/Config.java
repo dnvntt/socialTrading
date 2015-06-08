@@ -1,11 +1,8 @@
 package vn.com.vndirect.socialtrading;
 
 
-import vn.com.vndirect.ors.client.api.utils.FileUtil;
-
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Properties;
 

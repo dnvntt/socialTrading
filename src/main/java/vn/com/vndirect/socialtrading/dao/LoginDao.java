@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import vn.com.vndirect.socialtrading.App;
@@ -140,17 +141,20 @@ public class LoginDao implements Dao<FollowerEntity, String> {
 		stmt.executeUpdate();
 		stmt.close();
 
-		// FIXME: NPE here
 		TraderEntity trader = App.listOfTraderEntity.get(traderId);
 		int curentFollow = trader.getNumberFollow();
 		float curentMoneyfollow = trader.getMoneyFollow();
 		
 		Follower folower = new Follower();
 		List<Follower> listFollower = App.mapOfTrader.get(traderId);
-		for (Follower f : listFollower) {
+		
+		Iterator<Follower> iter = listFollower.iterator();
+		while(iter.hasNext()) {
+		  Follower f = iter.next();
 			if (f.getId().equals(followerId)) {
 				folower = f;
-				listFollower.remove(f);
+				 iter.remove();
+				break;
 			}
 		}
 
