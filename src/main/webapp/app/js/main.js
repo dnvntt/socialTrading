@@ -7,7 +7,7 @@ var Traders = Backbone.Collection.extend({
 var FollowingRels = Backbone.Collection.extend({
     model: Backbone.Model.extend({
         idAttribute: "traderId"
-    });
+    }),
 });
 
 var Follower = Backbone.Model.extend({
