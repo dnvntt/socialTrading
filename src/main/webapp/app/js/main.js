@@ -199,6 +199,13 @@ var TraderList = React.createClass({
 });
 
 var NavBar = React.createClass({
+    logoutBtnClicked: function() {
+        $.post("/api/v1/logout").then(function() {
+            location.reload();
+        }).fail(function() {
+            alert("Lỗi. Không thể đăng xuất!");
+        });
+    },
     render: function() {
         return (
             <nav className="navbar navbar-default">
@@ -215,7 +222,7 @@ var NavBar = React.createClass({
                     <nav>
                         <ul className="nav navbar-nav navbar-right">
                         <li><p className="navbar-text">Hello, {me.id}</p></li>
-                        <li><button className="btn btn-default navbar-btn">Logout</button></li>
+                        <li><button className="btn btn-default navbar-btn" onClick={this.logoutBtnClicked}>Logout</button></li>
                         </ul>
                     </nav>
                 </div>

@@ -47,6 +47,13 @@ public class LoginHandler extends AbstractHandler {
 			}
 		});
 
+		Spark.post(PREFIX + "/logout", new Route() {
+			public Object handle(Request request, Response response) throws Exception {
+				request.session(false);
+				return "ok";
+			}
+		});
+
 		Spark.get(PREFIX + "/me", new Route() {
 			public Object handle(Request request, Response response) throws Exception {
 				LoginDao dao = new LoginDao();
