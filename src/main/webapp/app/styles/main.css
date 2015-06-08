@@ -29,3 +29,15 @@ h1, h2, h3, h4, h5, h6 {
 img {
   display: inline-block;
 }
+
+.form-login {
+  margin: 0 auto;
+  margin-top: 200px;
+  max-width: 400px;
+}
+
+.form-login .form-control {
+  font-size: 16px;
+  height: auto;
+  margin-bottom: 1em;
+}

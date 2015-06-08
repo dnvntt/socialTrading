@@ -294,10 +294,11 @@ var LoginScreen = React.createClass({
 
     render: function() {
         return (
-        <div>
-            <input type="text" ref="username" placeholder="Username"/>
-            <input type="password" ref="password" placeholder="Password"/>
-            <input type="submit" value="Login" onClick={this.login}/>
+        <div className="form-login">
+            <h2>Mời quý khách đăng nhập</h2>
+            <input className="form-control" type="text" ref="username" placeholder="Tên đăng nhập"/>
+            <input className="form-control" type="password" ref="password" placeholder="Mật khẩu"/>
+            <input className="btn btn-primary btn-block" type="submit" value="Đăng nhập" onClick={this.login}/>
         </div>
         );
     }
