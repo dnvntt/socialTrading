@@ -13,7 +13,11 @@ public class TraderEntity {
 	
 	public TraderEntity(String id1,int numberFollow1,float moneyFollow1,float cash1,float stockOnhandValue1)
 	{
-		id=id1;numberFollow= numberFollow1;cash=cash1; stockOnhandValue=stockOnhandValue1;
+		id=id1;
+		numberFollow= numberFollow1;
+		moneyFollow=moneyFollow1;
+		cash=cash1; 
+		stockOnhandValue=stockOnhandValue1;
 	}
 	
 	public String getId() {
