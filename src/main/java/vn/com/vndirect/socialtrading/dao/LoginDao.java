@@ -18,51 +18,73 @@ import vn.com.vndirect.socialtrading.entity.Following;
 import vn.com.vndirect.socialtrading.entity.TraderEntity;
 
 public class LoginDao implements Dao<FollowerEntity, String> {
-	private final Connection connection;
-
+	private Connection connection;
 	public LoginDao() throws SQLException {
-		connection = DriverManager.getConnection(Config.DB_URL,
+		connection = connectToDB();
+	}
+
+	private Connection connectToDB() throws SQLException {
+		return DriverManager.getConnection(Config.DB_URL,
 				Config.DB_USERNAME, Config.DB_PASSWORD);
 	}
 
-	public FollowerEntity authenticate(String user1, String password1) throws SQLException {
-		PreparedStatement stmt = connection
-				.prepareStatement("SELECT * FROM account where  username =? and password =?");
-		stmt.setString(1, user1);
-		stmt.setString(2, password1);
-
-		ResultSet rs = stmt.executeQuery();
+	public FollowerEntity authenticate(String user1, String password1) {
 		FollowerEntity follower = null;
-		while (rs.next()) {
-			follower = parseFollowerEntity(rs);
+		String query = "SELECT * FROM account WHERE username = ? AND password = ?";
+
+		try (Connection conn = connectToDB();
+			 PreparedStatement stmt = conn.prepareStatement(query)) {
+
+			stmt.setString(1, user1);
+			stmt.setString(2, password1);
+
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				follower = parseFollowerEntity(rs);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 
 		return follower;
 	}
 
-	public FollowerEntity getFollower(String id) throws SQLException {
-		PreparedStatement stmt = connection
-				.prepareStatement("SELECT * FROM account where  username =? and password =?");
-		stmt.setString(1, id);
-
-		ResultSet rs = stmt.executeQuery();
+	public FollowerEntity getFollower(String id) {
+		String query = "SELECT * FROM account where  username =? and password =?";
 		FollowerEntity follower = null;
-		while (rs.next()) {
-			follower = parseFollowerEntity(rs);
+
+		try (Connection conn = connectToDB();
+			 PreparedStatement stmt = conn.prepareStatement(query)) {
+			stmt.setString(1, id);
+
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				follower = parseFollowerEntity(rs);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 
 		return follower;
 	}
 
-	public List<Following> getAccount(String followerId) throws SQLException {
-		PreparedStatement stmt = connection
-				.prepareStatement("select b.traderid,b.username,b.numberfollow,b.monneyfollow,a.moneyAllocate,a.maxOpen   from following a, trader b  where id= ? and a.traderid = b.traderid;");
-		stmt.setString(1, followerId);
-		ResultSet rs = stmt.executeQuery();
-		List<Following> followingList = new ArrayList<Following>();
-		while (rs.next()) {
-			Following t = parseFollowing(rs);
-			followingList.add(t);
+	public List<Following> getAccount(String followerId) {
+		List<Following> followingList = new ArrayList<>();
+		String query = "select b.traderid, b.username, b.numberfollow, b.monneyfollow, a.moneyAllocate, a.maxOpen " +
+				"from following a, trader b  where id= ? and a.traderid = b.traderid ORDER BY b.traderid";
+
+		try (Connection conn = connectToDB();
+			 PreparedStatement stmt = conn.prepareStatement(query)) {
+
+			stmt.setString(1, followerId);
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				Following t = parseFollowing(rs);
+				followingList.add(t);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 
 		return followingList;
@@ -96,21 +118,22 @@ public class LoginDao implements Dao<FollowerEntity, String> {
 		stmt.setInt(3, money);
 		stmt.setInt(4, maxOpen);
 		stmt.setString(5, transactionId);
-		try{
+
+		try {
 			stmt.executeUpdate();
-		}
-		catch(Exception e){
+		} catch(Exception e) {
 			stmt.close();
 			return;
 		}
+
 		stmt.close();
 		TraderEntity trader = App.listOfTraderEntity.get(traderId);
 		int curentFollow = trader.getNumberFollow();
 		float curentMoneyfollow = trader.getNumberFollow();
 		
-		if(! App.mapOfTrader.containsKey(traderId)) App.mapOfTrader.put(traderId,  new ArrayList<Follower>());
+		if(!App.mapOfTrader.containsKey(traderId)) App.mapOfTrader.put(traderId,  new ArrayList<Follower>());
 		List<Follower> listFollower = App.mapOfTrader.get(traderId);
-		
+
 		Follower follower = new Follower();
 		follower.setId(followerId);
 		follower.setCurrentOpen(0);follower.setCurrentAllocate(0);
