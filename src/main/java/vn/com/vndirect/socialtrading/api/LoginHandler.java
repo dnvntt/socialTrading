@@ -6,6 +6,7 @@ import java.util.List;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import spark.*;
+import spark.servlet.SparkApplication;
 import vn.com.vndirect.socialtrading.dao.LoginDao;
 import vn.com.vndirect.socialtrading.entity.FollowerEntity;
 import vn.com.vndirect.socialtrading.entity.Following;
@@ -78,18 +79,24 @@ public class LoginHandler extends AbstractHandler {
 		Spark.post(PREFIX + "/follower/:id/following", new Route() {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
+				// FIXME This method always returns 200 OK even on error
+
 				String followerId = request.params(":id");
 				String traderId = request.queryParams("traderid");
 
-				int moneyAllocate = Integer.parseInt(request
-						.queryParams("money"));
-				int maxOpen = Integer.parseInt(request.queryParams("maxopen"));
-				LoginDao dao = new LoginDao();
+				try {
+					int moneyAllocate = Integer.parseInt(request
+							.queryParams("money"));
+					int maxOpen = Integer.parseInt(request.queryParams("maxopen"));
 
-				dao.followTrader(followerId, traderId, moneyAllocate, maxOpen);
+					LoginDao dao = new LoginDao();
 
-				response.status(200);
-				return "ok";
+					dao.followTrader(followerId, traderId, moneyAllocate, maxOpen);
+				} catch (NumberFormatException e) {
+					Spark.halt(400);
+				}
+
+				return "";
 			}
 		});
 
