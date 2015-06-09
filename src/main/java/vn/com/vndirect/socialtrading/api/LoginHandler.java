@@ -9,6 +9,7 @@ import spark.*;
 import vn.com.vndirect.socialtrading.dao.LoginDao;
 import vn.com.vndirect.socialtrading.entity.FollowerEntity;
 import vn.com.vndirect.socialtrading.entity.Following;
+import vn.com.vndirect.socialtrading.entity.PortfolioRow;
 
 public class LoginHandler extends AbstractHandler {
 	public LoginHandler() {
@@ -67,6 +68,17 @@ public class LoginHandler extends AbstractHandler {
 			}
 		});
 
+		// get portfolio's detail of follower or trader 
+		Spark.get(PREFIX + "/follower/:id/portfolio", new Route() {
+			public Object handle(Request request, Response response)
+					throws SQLException, Exception {
+				String followerId = request.params(":id");
+				LoginDao dao = new LoginDao();
+				List<PortfolioRow> portfolioRowList = dao.getPortfolio(followerId);
+				return mapper.writeValueAsString(portfolioRowList);
+			}
+		});
+				
 		// follow a trader
 		Spark.post(PREFIX + "/follower/:id/following", new Route() {
 			public Object handle(Request request, Response response)
