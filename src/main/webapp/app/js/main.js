@@ -2,6 +2,10 @@
 
 var Traders = Backbone.Collection.extend({
     url: "/api/v1/traders",
+
+    comparator: function(item) {
+        return item.get('id');
+    }
 });
 
 var FollowingRels = Backbone.Collection.extend({
