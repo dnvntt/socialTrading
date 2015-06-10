@@ -17,8 +17,8 @@ css: dir
 
 build: js css
 	cp app/index.html dist
-	cp -rf app/img dist
-	cp -rf bower_components dist
+	cp -rfu app/img dist
+	cp -rfu bower_components dist
 
 clean:
 	rm -rf dist

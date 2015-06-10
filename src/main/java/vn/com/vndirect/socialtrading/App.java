@@ -31,6 +31,7 @@ import org.eclipse.jetty.websocket.api.Session;
 import spark.Spark;
 import vn.com.vndirect.ors.client.api.OrderService;
 import vn.com.vndirect.ors.client.api.OrderServiceImpl;
+import vn.com.vndirect.ors.client.api.entity.OrderReport;
 import vn.com.vndirect.ors.client.api.entity.Report;
 import vn.com.vndirect.ors.client.api.utils.OrderException;
 import vn.com.vndirect.socialtrading.api.ApiHandler;
@@ -49,6 +50,33 @@ import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.ShutdownSignalException;
 
+
+class FakeOrderService implements OrderService {
+
+	public Report executePlaceOrder(String s, char c, String s1, String s2, double v, double v1) throws OrderException {
+		return null;
+	}
+
+	public Report executePlaceMSOrder(String s, char c, String s1, String s2, double v, double v1) throws OrderException {
+		return null;
+	}
+
+	public Report executeCancelOrder(String s, String s1, char c, String s2, double v) throws OrderException {
+		return null;
+	}
+
+	public Report executeReplaceOrder(String s, String s1, char c, char c1, String s2, double v, double v1) throws OrderException {
+		return null;
+	}
+
+	public List<OrderReport> getOrderReport(String s) {
+		return null;
+	}
+
+	public OrderReport getLastOrderStatus(String s) {
+		return null;
+	}
+}
 
 public class App {
 
@@ -128,7 +156,8 @@ public class App {
 				Config.EXCHANGE_NAME_EXECUTED, conn);
 
 		mapper = new ObjectMapper();
-		orderService = new OrderServiceImpl();
+//		orderService = new OrderServiceImpl();
+		orderService = new FakeOrderService();
 		mapOfTrader = new HashMap<String, List<Follower>>();
 		listOfStock = new HashMap<String, Integer>();
 		listOfTraderEntity = new HashMap<String, TraderEntity>();

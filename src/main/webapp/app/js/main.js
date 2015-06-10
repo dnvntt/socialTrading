@@ -99,7 +99,6 @@ var TraderLine = React.createClass({
             followButtonText = "Follow";
             followBtnClasses += "btn-primary";
         }
-        console.log(this.props.trader)
 
         return (
             <div className="trader clearfix">
@@ -195,7 +194,6 @@ var TraderList = React.createClass({
 
         return (
             <div className="trader-list">
-                <RiskSlider/>
                 {nodes}
             </div>
         );
@@ -213,22 +211,19 @@ var NavBar = React.createClass({
     render: function() {
         return (
             <nav className="navbar navbar-default">
-                <div className="container">
+                <div className="container-fluid">
                     <div className="navbar-header">
                         <a className="navbar-brand" href="#">
-                           <img alt="Brand" 
-                           width="20"
-                           height="20"
-                           src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAMAAAC7IEhfAAAA81BMVEX///9VPnxWPXxWPXxWPXxWPXxWPXxWPXz///9hSYT6+vuFc6BXPn37+vz8+/z9/f2LeqWMe6aOfqiTg6uXiK5bQ4BZQX9iS4VdRYFdRYJfSINuWI5vWY9xXJF0YJR3Y5Z4ZZd5ZZd6Z5h9apq0qcW1qsW1q8a6sMqpnLyrn76tocCvpMGwpMJoUoprVYxeRoJjS4abjLGilLemmbrDutDFvdLPx9nX0eDa1OLb1uPd1+Td2OXe2eXh3Ofj3+nk4Orl4evp5u7u7PLv7fPx7/T08vb08/f19Pf29Pj39vn6+fuEcZ9YP35aQn/8/P1ZQH5fR4PINAOdAAAAB3RSTlMAIWWOw/P002ipnAAAAPhJREFUeF6NldWOhEAUBRvtRsfdfd3d3e3/v2ZPmGSWZNPDqScqqaSBSy4CGJbtSi2ubRkiwXRkBo6ZdJIApeEwoWMIS1JYwuZCW7hc6ApJkgrr+T/eW1V9uKXS5I5GXAjW2VAV9KFfSfgJpk+w4yXhwoqwl5AIGwp4RPgdK3XNHD2ETYiwe6nUa18f5jYSxle4vulw7/EtoCdzvqkPv3bn7M0eYbc7xFPXzqCrRCgH0Hsm/IjgTSb04W0i7EGjz+xw+wR6oZ1MnJ9TWrtToEx+4QfcZJ5X6tnhw+nhvqebdVhZUJX/oFcKvaTotUcvUnY188ue/n38AunzPPE8yg7bAAAAAElFTkSuQmCC"/>
+                           <span className="accent">D</span>uber
                         </a>
                     </div>
 
-                    <nav>
+                    <div className="collapse navbar-collapse">
                         <ul className="nav navbar-nav navbar-right">
                         <li><p className="navbar-text">Hello, {me.id}</p></li>
                         <li><button className="btn btn-default navbar-btn" onClick={this.logoutBtnClicked}>Logout</button></li>
                         </ul>
-                    </nav>
+                    </div>
                 </div>
             </nav>
         );
@@ -241,7 +236,7 @@ var App = React.createClass({
         dispatcher.register(function(message) {
             switch(message.type) {
             case "auth.authenticated":
-                _this.setState({authChecking: false, loggedIn: true});
+                _this.setState({authChecking: false, loggedIn: true, screen: "wizard"});
                 _this.forceUpdate();
             }
         });
@@ -260,32 +255,49 @@ var App = React.createClass({
             });
 
         return {
+            screen: "home",
             authChecking: true,
             loggedIn: false
         };
     },
 
-    logout: function() {
-        alert("Logging out is not implemented yet!");
+    startInvesting: function() {
+        // TODO Check if this is the first time this user logged in
+
+        this.setState({
+            screen: this.state.loggedIn ? "wizard" : "login"
+        });
+
+        this.forceUpdate();
     },
 
     render: function() {
-        if (this.state.authChecking) {
-            return (<h2>Checking authentication...</h2>);
-        } else {
-            if (this.state.loggedIn) {
-                return (
-                    <div>
-                        <NavBar/>
-                        <div className="container">
-                        <TraderList traders={traders}/>
-                        </div>
-                    </div>
-                );
+        // FIXME Proper routing
+        var inner;
+        if (this.state.screen === "home") {
+            inner = <HomeScreen onTransit={this.startInvesting}/>;
+        } else if (this.state.screen === "login") {
+            if (this.state.authChecking) {
+                inner = (<h2>Checking authentication...</h2>);
             } else {
-                return <LoginScreen/>;
+                inner = <LoginScreen/>;
             }
+        } else if (this.state.screen === "wizard") {
+            inner = <WizardScreen/>
+        } else if (this.state.screne === "account") {
+            inner = <TraderList/>
         }
+
+        return (
+            <div className="container-fluid top-container">
+                <NavBar/>
+                {inner}
+
+                <footer>
+                <span>Bản quyền © Công ty cổ phần chứng khoán VNDIRECT</span>
+                </footer>
+            </div>
+        );
     }
 });
 
@@ -311,6 +323,124 @@ var LoginScreen = React.createClass({
             <input className="form-control" type="password" ref="password" placeholder="Mật khẩu"/>
             <input className="btn btn-primary btn-block" type="submit" value="Đăng nhập" onClick={this.login}/>
         </div>
+        );
+    }
+});
+
+
+var HomeScreen = React.createClass({
+    transitToApp: function() {
+        console.log("haha");
+        this.props.onTransit();
+    },
+
+    render: function() {
+        return (
+            <div className="home-container">
+
+            <div className="hero">
+                <img src="/img/shoutout.png"/>
+
+                <div className="row">
+                    <div className="col-md-8">
+                        <p>
+                        Mạng đầu tư <span className="accent">Duber</span> - 
+                        Hệ thống giúp bạn tự động sao chép chiến lược của các nhà đầu tư lãi nhất trên thị trường. 
+                        </p>
+                    </div>
+
+                    <div className="col-md-4">
+                        <button className="btn btn-lg btn-primary" onClick={this.transitToApp}>
+                        Đầu tư ngay!
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="row features">
+                <div className="col-md-4">
+                    <h3>Tiết kiệm thời gian</h3>
+                    <p>
+                    Chỉ cần đăng ký duy nhất một tài khoản VNDIRECT,
+                    bạn đã trở thành một phần của cộng đồng Duber.
+                    </p>
+                </div>
+                <div className="col-md-4">
+                    <h3>Lãi nhất thị trường</h3>
+                    <p>
+                    Lựa chọn các nhà đầu tư lãi nhất trên thị trường
+                    và Duber sẽ tự động sao chép các hoạt động đầu tư
+                    của họ vào tài khoản của bạn.
+                    </p>
+                </div>
+                <div className="col-md-4">
+                    <h3>Minh bạch thông tin</h3>
+                    <p>
+                    Quản lý tài khoản dễ dàng, hiển thị minh bạch thông tin
+                    đầu tư của bạn và Nhà đầu tư bạn theo dõi.
+                    </p>
+                </div>
+            </div>
+
+            </div>
+        );
+    }
+});
+
+
+var TraderCarousel = React.createClass({
+    componentDidMount: function() {
+        $(this.refs.slider.getDOMNode()).slick();
+    },
+
+    render: function() {
+        return (
+            <div>
+                <div ref="details"></div>
+
+                <div ref="slider">
+                  <div>your content</div>
+                  <div>your content</div>
+                  <div>your content</div>
+                </div>
+            </div>
+        );
+    }
+});
+
+
+var WizardScreen = React.createClass({
+    render: function() {
+        return (
+            <div className="container-fluid wizard">
+                <div className="panel panel-default">
+                    <div className="panel-heading">
+                        <h2 className="panel-title">Cài đặt Tài khoản của bạn</h2>
+                    </div>
+
+                    <div className="panel-body">
+                        <div className="step">
+                            <h3>Bước 1: Đặt mức độ rủi ro bạn sẵn sàng chấp nhận</h3>
+                            <RiskSlider/>
+                        </div>
+
+                        <div className="step">
+                            <h3>Bước 2: Chọn Nhà đầu tư bạn sẽ copy chiến lược</h3>
+                            <TraderCarousel traders={traders}/>
+                        </div>
+
+                        <div className="step">
+                            <h3>Bước 3: Chọn số tiền đặt cho Nhà đầu tư bạn vừa chọn</h3>
+                            <input type="text"/> triệu VND
+                        </div>
+
+                        <div className="button-row clearfix">
+                            <button className="btn btn-primary">Hoàn thành</button>
+                            <button className="btn btn-default">Bỏ qua</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         );
     }
 });

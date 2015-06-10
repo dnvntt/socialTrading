@@ -1,6 +1,23 @@
 
 h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
+  font-weight: bold;
+}
+
+img {
+  display: block;
+}
+
+html {
+  background-color: #F2F2F2;
+}
+
+body {
+  max-width: 795px;  /* Linh's number */
+  background-image: url("/img/background.jpg");
+  margin: 0 auto;
+  font-size: 12px;
+  color: #535551;
 }
 
 .trader-list > .trader:nth-child(odd) {
@@ -31,8 +48,7 @@ img {
 }
 
 .form-login {
-  margin: 0 auto;
-  margin-top: 200px;
+  margin: 100px auto;
   max-width: 400px;
 }
 
@@ -40,4 +56,82 @@ img {
   font-size: 16px;
   height: auto;
   margin-bottom: 1em;
+}
+
+.navbar-default {
+  background-color: #5E5E5E;
+  border-radius: 0px;
+}
+
+.navbar-default .navbar-text,
+.navbar-default .navbar-brand {
+  color: white;
+}
+
+.navbar-brand {
+  font-size: 40px;
+  font-weight: bold;
+}
+
+.btn-primary {
+  background-color: #FF9900;
+  color: white;
+  font-weight: bold;
+}
+
+.home-container {
+  padding-left: 44px;
+  padding-right: 44px;
+}
+
+.hero {
+  margin-bottom: 20px;
+}
+
+.hero p {
+  font-size: 20px;
+}
+
+.hero img {
+  margin-left: -27px;
+  margin-bottom: 25px;
+}
+
+.features h3 {
+  font-size: 18px;
+}
+
+.features h3::before {
+  content: url("/img/bullet-point.png");
+  margin-left: -20px;
+  margin-right: 9px;
+}
+
+.top-container {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+footer {
+  background: #5E5E5E;
+  color: #D7D7D7;
+  margin: 0px;
+  padding: 15px;
+}
+
+span.accent {
+  color: #FF9900;
+}
+
+.wizard {
+  font-size: 18px;
+}
+
+.wizard .step {
+  margin-bottom: 20px;
+}
+
+.button-row button {
+  float: right;
+  margin-left: 10px;
 }
