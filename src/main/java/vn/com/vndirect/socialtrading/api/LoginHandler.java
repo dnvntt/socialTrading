@@ -37,7 +37,8 @@ public class LoginHandler extends AbstractHandler {
 				String password = request.queryParams("pass");
 				LoginDao dao = new LoginDao();
 				FollowerEntity follower = dao.authenticate(user, password);
-				if (follower.equals(null)) {
+
+				if (follower == null) {
 					response.status(404);
 					return "Fail";
 				} else {
