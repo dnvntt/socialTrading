@@ -20,6 +20,7 @@ public class Config {
     public static String DB_URL = "jdbc:postgresql://localhost:5432/zulu";
     public static String DB_USERNAME = "postgres";
     public static String DB_PASSWORD = "123456";
+    public static int PORT_WEBSOCKET = 8090;
 
     public static void loadConfig() {
         try {

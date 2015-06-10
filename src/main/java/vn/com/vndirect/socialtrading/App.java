@@ -10,9 +10,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,9 @@ import java.util.TimerTask;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.websocket.api.Session;
 
 import spark.Spark;
 import vn.com.vndirect.ors.client.api.OrderService;
@@ -35,6 +40,7 @@ import vn.com.vndirect.socialtrading.entity.Follower;
 import vn.com.vndirect.socialtrading.entity.FollowerEntity;
 import vn.com.vndirect.socialtrading.entity.SendOrder;
 import vn.com.vndirect.socialtrading.entity.TraderEntity;
+import vn.com.vndirect.socialtrading.websocket.StockServiceSocketServlet;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -43,9 +49,10 @@ import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.ShutdownSignalException;
 
+
 public class App {
 
-	public static void main(String[] args) throws SQLException {
+	public static void main(String[] args) throws Exception {
 		Config.loadConfig();
 		App app = null;
 		Spark.externalStaticFileLocation("src/main/webapp/dist");
@@ -63,8 +70,16 @@ public class App {
 			e.printStackTrace();
 		}
 
+		//websocket 
+		Server server = new Server(Config.PORT_WEBSOCKET);
+	    ServletContextHandler ctx = new ServletContextHandler();
+	    ctx.setContextPath("/");
+	    ctx.addServlet(StockServiceSocketServlet.class, "/stocks");
+	    server.setHandler(ctx);
+	    server.start();
+	    server.join();
 	}
-
+	
 	private ObjectMapper mapper;
 	private OrderService orderService;
 	private QueueingConsumer consumerSent;
@@ -74,8 +89,7 @@ public class App {
 	public static Map<String, List<Follower>> mapOfTrader; // map signalprovider
 															// id with
 	// list of follower
-	public static Map<String, Integer> listOfStock; // list all stock with its
-													// risk
+	public static Map<String, Integer> listOfStock; // list all stock with its risk 
 
 	public static Map<String, TraderEntity> listOfTraderEntity; // list all
 																// trader or
@@ -98,7 +112,8 @@ public class App {
 
 	public static List<String> OrderPendingList; // list all order pending of
 													// trader and follower
-
+	public static Map<String, Session> mapOfSession;
+	
 	public App() throws IOException {
 		ConnectionFactory factory = new ConnectionFactory();
 		factory.setHost(Config.RABBIT_HOST);
@@ -121,7 +136,8 @@ public class App {
 		OrderPendingList = new ArrayList<String>();
 		OrderPendingFollower = new HashMap<String, String>();
 		listOfFollowerEntity = new HashMap<String, FollowerEntity>();
-
+		mapOfSession = new HashMap<String, Session>() ;
+		
 		reloadData();
 		run();
 	}
@@ -334,7 +350,7 @@ public class App {
 					continue;
 
 				Map<String, Integer> mapStockFollow = null;
-				// lenh ban, check followeer neu khong co CK thi bo qua
+				// lenh ban, check follower neu khong co CK thi bo qua
 				if (side == 2) {
 					mapStockFollow = f.getMapStockQuantityFollow();
 					if (!mapStockFollow.containsKey(symbol))
@@ -404,8 +420,24 @@ public class App {
 					// check lenh khong bi loi
 					if (report.getStatus() != false) {
 						OrderPendingList.add(order_id_return);
-						OrderPendingFollower.put(order_id_return,
-								orderByTrader.getAccount());
+						OrderPendingFollower.put(order_id_return,orderByTrader.getAccount());
+						
+						//send thong tin lenh cho follower
+						Session clientSession = mapOfSession.get(followerOrder.getAccount());
+						if(clientSession !=null) {
+							DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+							Date date = new Date();
+
+							String msgPush = "SentOrder:" + order_id_return
+									+ "," + followerOrder.getSide() + ","
+									+ followerOrder.getType() + ","
+									+ followerOrder.getSymbol() + ","
+									+ followerOrder.getPrice() + ","
+									+ followerOrder.getQty() + ","
+									+ dateFormat.format(date);
+
+							clientSession.getRemote().sendString(msgPush);
+						}
 					}
 				} catch (OrderException e) {
 					// FIXME: What to do if this order fails to send?
@@ -445,6 +477,19 @@ public class App {
 			if (OrderPendingList.contains(orderId)) // neu list co order quan
 													// tam thi update database
 			{
+				//send thong tin lenh khop cho follower
+				Session clientSession = mapOfSession.get(acc);
+				if (clientSession != null) {
+					String msgPush = "ExecutedOrder:" + orderId + ","
+							+ order.getSide() + "," + order.getSymbol() + ","
+							+ order.getMatchedQty() + "," + ","
+							+ order.getMatchedPrice() + ","
+							+ order.getTransactTime() + ","
+							+ order.getTradeDate();
+
+					clientSession.getRemote().sendString(msgPush);
+				}
+				
 				// xu ly khop lenh toan bo
 				if (order.getMatchedQty() == order.getQty()) {
 					if (listOfTraderEntity.containsKey(acc)) {
@@ -462,7 +507,6 @@ public class App {
 					}
 				}
 				// neu la lenh mua, xu ly khop lenh 1 phan
-
 			}
 		} catch (JsonGenerationException e) {
 			e.printStackTrace();
@@ -511,6 +555,61 @@ public class App {
 		historyUpdateSt.setString(1, accountId);
 		historyUpdateSt.setString(2, orderId);
 		historyUpdateSt.executeUpdate();
+		
+		// update portfolio of trader/follower (assume 1 follower follows 1 trader )
+		PreparedStatement stmt1 = connection
+				.prepareStatement("select * from portfolio where id=? and stock=?");
+		stmt1.setString(1, accountId);
+		stmt1.setString(2, symbol);
+
+		ResultSet rs1 = stmt1.executeQuery();
+		int quantityOnHand = 0, cost = 0;
+		while (rs1.next()) {
+			quantityOnHand = rs1.getInt("quantity");
+			cost = rs1.getInt("cost");
+		}
+		rs1.close();
+		stmt1.close();
+
+		if (quantityOnHand == 0) {
+			String sql = "insert into portfolio  (id ,stock,quantity,cost) VALUES ( ?,?,?,?) ";
+
+			PreparedStatement porfolioUpdateSt = conn.prepareStatement(sql);
+			porfolioUpdateSt.setString(1, accountId);
+			porfolioUpdateSt.setString(2, symbol);
+			porfolioUpdateSt.setInt(3, quantity);
+			porfolioUpdateSt.setInt(4, price);
+
+			porfolioUpdateSt.executeUpdate();
+			porfolioUpdateSt.close();
+		} else {
+			if (order.getSide() == 2 && quantityOnHand == quantity) {
+				String sql = "delete from portfolio  WHERE id = ? and stock= ?";
+
+				PreparedStatement porfolioUpdateSt = conn.prepareStatement(sql);
+				porfolioUpdateSt.setString(1, accountId);
+				porfolioUpdateSt.setString(2, symbol);
+				porfolioUpdateSt.executeUpdate();
+				porfolioUpdateSt.close();
+			} else {
+				String sql = "update portfolio set quantity=?, cost=? where id=? and stock=?";
+
+				PreparedStatement porfolioUpdateSt = conn.prepareStatement(sql);
+				porfolioUpdateSt.setString(3, accountId);
+				porfolioUpdateSt.setString(4, symbol);
+				int newCost = cost;
+				if (order.getSide() == 1) {
+					porfolioUpdateSt.setInt(1, quantity + quantityOnHand);
+					newCost = (price * quantity + quantityOnHand * cost)
+							/ (quantity + quantityOnHand);
+				} else
+					porfolioUpdateSt.setInt(1, quantityOnHand - quantity);
+
+				porfolioUpdateSt.setInt(2, newCost);
+				porfolioUpdateSt.executeUpdate();
+				porfolioUpdateSt.close();
+			}
+		}
 
 		if (type == 0) { // la trader
 			// update account of trader
@@ -528,66 +627,6 @@ public class App {
 			traderUpdateSt.setString(2, accountId);
 			traderUpdateSt.executeUpdate();
 
-			// update portfolio of trader
-			PreparedStatement stmt1 = connection
-					.prepareStatement("select * from portfolio where id=? and stock=?");
-			stmt1.setString(1, accountId);
-			stmt1.setString(2, symbol);
-
-			ResultSet rs1 = stmt1.executeQuery();
-			int quantityOnHand = 0, cost = 0;
-			while (rs1.next()) {
-				quantityOnHand = rs1.getInt("quantity");
-				cost = rs1.getInt("cost");
-			}
-			rs1.close();
-			stmt1.close();
-			
-			if (quantityOnHand == 0) {
-				String sql = "insert into portfolio  (id ,stock,quantity,cost) VALUES ( ?,?,?,?) ";
-				
-				PreparedStatement porfolioUpdateSt = conn.prepareStatement(sql);
-				porfolioUpdateSt.setString(1, accountId);
-				porfolioUpdateSt.setString(2, symbol);
-				porfolioUpdateSt.setInt(3, quantity);
-				porfolioUpdateSt.setInt(4, price);
-				
-				porfolioUpdateSt.executeUpdate();
-				porfolioUpdateSt.close();
-			}
-			else
-			{
-				if(order.getSide() == 2 && quantityOnHand==quantity)
-				{
-					String sql = "delete from portfolio  WHERE id = ? and stock= ?";
-
-					PreparedStatement porfolioUpdateSt = conn
-							.prepareStatement(sql);
-					porfolioUpdateSt.setString(1, accountId);
-					porfolioUpdateSt.setString(2, symbol);
-					porfolioUpdateSt.executeUpdate();
-					porfolioUpdateSt.close();
-				}
-				else 
-				{
-					String sql = "update portfolio set quantity=?, cost=? where id=? and stock=?) ";  
-					
-					PreparedStatement porfolioUpdateSt = conn.prepareStatement(sql);
-					porfolioUpdateSt.setString(3, accountId);
-					porfolioUpdateSt.setString(4, symbol);
-					int newCost=cost;
-					if (order.getSide() == 1){
-						porfolioUpdateSt.setInt(1, quantity+quantityOnHand);
-						newCost= (price*quantity+quantityOnHand*cost)/(quantity+quantityOnHand);
-					}
-					else
-						porfolioUpdateSt.setInt(1, quantityOnHand-quantity);
-					
-					porfolioUpdateSt.setInt(2, newCost );
-					porfolioUpdateSt.executeUpdate();
-					porfolioUpdateSt.close();
-				}
-			}
 
 		} else { // la follower
 			String traderId = OrderPendingFollower.get(orderId);
@@ -600,13 +639,7 @@ public class App {
 					if (order.getSide() == 1)
 						f.getMapStockQuantityFollow().put(symbol, quantity);
 					else
-						f.getMapStockQuantityFollow().remove(symbol); // neu ban
-																		// thanh
-																		// cong
-																		// thi
-																		// bo ma
-																		// nay
-																		// ra
+						f.getMapStockQuantityFollow().remove(symbol); // neu ban thanh cong thi bo ma nay ra 
 					break;
 				}
 			}

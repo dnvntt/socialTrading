@@ -15,6 +15,7 @@ import vn.com.vndirect.socialtrading.Config;
 import vn.com.vndirect.socialtrading.entity.Follower;
 import vn.com.vndirect.socialtrading.entity.FollowerEntity;
 import vn.com.vndirect.socialtrading.entity.Following;
+import vn.com.vndirect.socialtrading.entity.PortfolioRow;
 import vn.com.vndirect.socialtrading.entity.TraderEntity;
 
 public class LoginDao implements Dao<FollowerEntity, String> {
@@ -67,6 +68,30 @@ public class LoginDao implements Dao<FollowerEntity, String> {
 
 		return follower;
 	}
+	
+	public List<PortfolioRow> getPortfolio(String followerId) throws SQLException {
+		PreparedStatement stmt = connection
+				.prepareStatement("select * from portfolio where id= ? ");
+		stmt.setString(1, followerId);
+		ResultSet rs = stmt.executeQuery();
+		List<PortfolioRow> portfolioRowList = new ArrayList<PortfolioRow>();
+		while (rs.next()) {
+			PortfolioRow t = parsePortfolioRow(rs);
+			portfolioRowList.add(t);
+		}
+
+		return portfolioRowList;
+	}
+	
+	private PortfolioRow parsePortfolioRow(ResultSet rs) throws SQLException {
+		PortfolioRow portfolioRow = new PortfolioRow();
+		portfolioRow.setStock(rs.getString("stock"));
+		portfolioRow.setQuantity(rs.getInt("quantity"));
+		portfolioRow.setCost(rs.getInt("cost"));
+
+		return portfolioRow;
+	}
+	
 
 	public List<Following> getAccount(String followerId) {
 		List<Following> followingList = new ArrayList<>();
@@ -99,6 +124,7 @@ public class LoginDao implements Dao<FollowerEntity, String> {
 		return follower;
 	}
 
+	
 	private Following parseFollowing(ResultSet rs) throws SQLException {
 		Following following = new Following();
 		following.setTraderId(rs.getString("traderid"));
