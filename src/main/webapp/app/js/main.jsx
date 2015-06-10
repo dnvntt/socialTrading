@@ -24,26 +24,26 @@ var Follower = Backbone.Model.extend({
 
         dispatcher.register(function(message) {
             switch (message.type) {
-            case "ask_to_follow_trader":
-                $.post("/api/v1/follower/" + _this.id + "/following", {
-                   traderid: message.trader.id,
-                   money: 213,
-                   maxopen: 3
-                }).then(function() {
-                    _this.fetch();
-                    traders.fetch();
-                });
-                break;
-            case "ask_to_unfollow_trader":
-                $.ajax({
-                    url: "/api/v1/follower/" + _this.id + "/following/" + message.trader.id,
-                    method: "DELETE",
-                    success: function() {
+                case "ask_to_follow_trader":
+                    $.post("/api/v1/follower/" + _this.id + "/following", {
+                        traderid: message.trader.id,
+                        money: 213,
+                        maxopen: 3
+                    }).then(function() {
                         _this.fetch();
                         traders.fetch();
-                    }
-                });
-                break;
+                    });
+                    break;
+                case "ask_to_unfollow_trader":
+                    $.ajax({
+                        url: "/api/v1/follower/" + _this.id + "/following/" + message.trader.id,
+                        method: "DELETE",
+                        success: function() {
+                            _this.fetch();
+                            traders.fetch();
+                        }
+                    });
+                    break;
             }
         });
     },
@@ -54,7 +54,7 @@ var Follower = Backbone.Model.extend({
         this.get("followingTraders").url = "/api/v1/follower/" + this.id + "/following";
         this.get("followingTraders").fetch().then(function() {
             console.log("followingTraders fetched")
-            _this.get("followingTraders").trigger("change")
+                _this.get("followingTraders").trigger("change")
         });
         return res;
     },
@@ -102,34 +102,34 @@ var TraderLine = React.createClass({
 
         return (
             <div className="trader clearfix">
-            <div className="block">
-            <img src="/img/trader1.jpg" className="img-thumbnail"/>
-            </div>
+              <div className="block">
+                <img src="/img/trader1.jpg" className="img-thumbnail"/>
+              </div>
 
-            <div className="block basic-info">
-            <h2>{this.props.trader.get("name")}</h2>
-            <p className="text-muted">
-                {this.props.trader.get("id")}
-                {this.props.trader.get("description")}
-            </p>
-            </div>
+              <div className="block basic-info">
+                <h2>{this.props.trader.get("name")}</h2>
+                <p className="text-muted">
+                  {this.props.trader.get("id")}
+                  {this.props.trader.get("description")}
+                </p>
+              </div>
 
-            <div className="block">
-            <span className="text-label">Amount following</span><br/>
-            <span>${this.props.trader.get("cash")}</span><br/>
+              <div className="block">
+                <span className="text-label">Amount following</span><br/>
+                <span>${this.props.trader.get("cash")}</span><br/>
 
-            <span className="text-label">People following</span><br/>
-            <span>{this.props.trader.get("peopleFollowing")}</span><br/>
+                <span className="text-label">People following</span><br/>
+                <span>{this.props.trader.get("peopleFollowing")}</span><br/>
 
-            <span className="text-label">ROI</span><br/>
-            <span>{this.props.trader.get("roi")}%</span>
-            </div>
+                <span className="text-label">ROI</span><br/>
+                <span>{this.props.trader.get("roi")}%</span>
+              </div>
 
-            <div className="block">
-            <button type="submit" 
-            className={followBtnClasses}
-            onClick={this.followBtnToggled}>{{followButtonText}}</button>
-            </div>
+              <div className="block">
+                <button type="submit" 
+                        className={followBtnClasses}
+                        onClick={this.followBtnToggled}>{{followButtonText}}</button>
+              </div>
             </div>
         );
     }
@@ -157,12 +157,12 @@ var RiskSlider = React.createClass({
     render: function() {
         return (
             <input ref="self"
-            type="range"
-            min="10"
-            max="100"
-            step="10"
-            value={this.state.value}
-            onChange={this.onChange}/>
+                   type="range"
+                   min="10"
+                   max="100"
+                   step="10"
+                   value={this.state.value}
+                   onChange={this.onChange}/>
         );
     }
 });
@@ -177,7 +177,7 @@ var TraderList = React.createClass({
 
         me.get("followingTraders").on("change", function() {
             console.log("followingTraders changed")
-            _this.forceUpdate();
+                _this.forceUpdate();
         });
 
         this.props.traders.on("change add remove reset", function() {
@@ -194,7 +194,7 @@ var TraderList = React.createClass({
 
         return (
             <div className="trader-list">
-                {nodes}
+              {nodes}
             </div>
         );
     }
@@ -211,20 +211,20 @@ var NavBar = React.createClass({
     render: function() {
         return (
             <nav className="navbar navbar-default">
-                <div className="container-fluid">
-                    <div className="navbar-header">
-                        <a className="navbar-brand" href="#">
-                           <span className="accent">D</span>uber
-                        </a>
-                    </div>
-
-                    <div className="collapse navbar-collapse">
-                        <ul className="nav navbar-nav navbar-right">
-                        <li><p className="navbar-text">Hello, {me.id}</p></li>
-                        <li><button className="btn btn-default navbar-btn" onClick={this.logoutBtnClicked}>Logout</button></li>
-                        </ul>
-                    </div>
+              <div className="container-fluid">
+                <div className="navbar-header">
+                  <a className="navbar-brand" href="#">
+                    <span className="accent">D</span>uber
+                  </a>
                 </div>
+
+                <div className="collapse navbar-collapse">
+                  <ul className="nav navbar-nav navbar-right">
+                    <li><p className="navbar-text">Hello, {me.id}</p></li>
+                    <li><button className="btn btn-default navbar-btn" onClick={this.logoutBtnClicked}>Logout</button></li>
+                  </ul>
+                </div>
+              </div>
             </nav>
         );
     }
@@ -235,9 +235,9 @@ var App = React.createClass({
         var _this = this;
         dispatcher.register(function(message) {
             switch(message.type) {
-            case "auth.authenticated":
-                _this.setState({authChecking: false, loggedIn: true, screen: "wizard"});
-                _this.forceUpdate();
+                case "auth.authenticated":
+                    _this.setState({authChecking: false, loggedIn: true, screen: "wizard"});
+                    _this.forceUpdate();
             }
         });
     },
@@ -249,10 +249,10 @@ var App = React.createClass({
                 _this.setState({authChecking: false, loggedIn: true});
                 _this.forceUpdate();
             }).fail(
-            function() {
-                _this.setState({authChecking: false, loggedIn: false});
-                _this.forceUpdate();
-            });
+                function() {
+                    _this.setState({authChecking: false, loggedIn: false});
+                    _this.forceUpdate();
+                });
 
         return {
             screen: "home",
@@ -285,7 +285,7 @@ var App = React.createClass({
         } else if (this.state.screen === "wizard") {
             inner = <WizardScreen/>
         } else if (this.state.screne === "account") {
-            inner = <TraderList/>
+                                                     inner = <TraderList/>
         }
 
         return (
@@ -390,15 +390,17 @@ var HomeScreen = React.createClass({
 
 var TraderCarousel = React.createClass({
     componentDidMount: function() {
-        $(this.refs.slider.getDOMNode()).slick();
+        var thumb = this.refs.thumbSlider.get();
+        $(this.refs.thumbSlider.getDOMNode()).slick();
+        $(this.refs.detailSlider.getDOMNode()).slick();
     },
 
     render: function() {
         return (
             <div>
-                <div ref="details"></div>
+                <div ref="detailSlider"></div>
 
-                <div ref="slider">
+                <div ref="thumbSlider">
                   <div>your content</div>
                   <div>your content</div>
                   <div>your content</div>
