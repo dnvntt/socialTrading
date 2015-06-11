@@ -51,33 +51,6 @@ import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.ShutdownSignalException;
 
 
-class FakeOrderService implements OrderService {
-
-	public Report executePlaceOrder(String s, char c, String s1, String s2, double v, double v1) throws OrderException {
-		return null;
-	}
-
-	public Report executePlaceMSOrder(String s, char c, String s1, String s2, double v, double v1) throws OrderException {
-		return null;
-	}
-
-	public Report executeCancelOrder(String s, String s1, char c, String s2, double v) throws OrderException {
-		return null;
-	}
-
-	public Report executeReplaceOrder(String s, String s1, char c, char c1, String s2, double v, double v1) throws OrderException {
-		return null;
-	}
-
-	public List<OrderReport> getOrderReport(String s) {
-		return null;
-	}
-
-	public OrderReport getLastOrderStatus(String s) {
-		return null;
-	}
-}
-
 public class App {
 
 	public static void main(String[] args) throws Exception {
@@ -158,8 +131,7 @@ public class App {
 				Config.EXCHANGE_NAME_EXPIRED, conn);
 
 		mapper = new ObjectMapper();
-//		orderService = new OrderServiceImpl();
-		orderService = new FakeOrderService();
+		orderService = new OrderServiceImpl();
 		mapOfTrader = new HashMap<String, List<Follower>>();
 		listOfStock = new HashMap<String, Integer>();
 		listOfTraderEntity = new HashMap<String, TraderEntity>();
@@ -459,7 +431,7 @@ public class App {
 					Report report = orderService
 							.executePlaceOrder(accountOfFollower,
 									Integer.toString(followerOrder.getSide())
-											.charAt(0),
+											.charAt(0) == 0 ? "NS" : "NB",
 									followerOrder.getType() == 1 ? "MP" : "LO",
 									followerOrder.getSymbol(), followerOrder
 											.getPrice(), followerOrder.getQty());
