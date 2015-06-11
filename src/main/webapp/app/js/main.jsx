@@ -27,7 +27,7 @@ var Follower = Backbone.Model.extend({
                 case "ask_to_follow_trader":
                     $.post("/api/v1/follower/" + _this.id + "/following", {
                         traderid: message.trader.id,
-                        money: 213,
+                        money: message.allocatedMoney,
                         maxopen: 3
                     }).then(function() {
                         _this.fetch();
@@ -239,6 +239,14 @@ var App = React.createClass({
         this.forceUpdate();
     },
 
+    wizardCompleted: function() {
+        this.setState({
+            screen: "account"
+        });
+
+        this.forceUpdate();
+    },
+
     render: function() {
         // FIXME Proper routing
         var inner;
@@ -251,9 +259,9 @@ var App = React.createClass({
                 inner = <LoginScreen/>;
             }
         } else if (this.state.screen === "wizard") {
-            inner = <WizardScreen/>
-        } else if (this.state.screne === "account") {
-                                                     inner = <TraderList/>
+            inner = <WizardScreen onCompletion={this.wizardCompleted}/>
+        } else if (this.state.screen === "account") {
+            inner = <TraderList traders={traders}/>
         }
 
         return (
@@ -356,7 +364,14 @@ var HomeScreen = React.createClass({
 });
 
 
+// FIXME Using global `traders` object
 var TraderCarousel = React.createClass({
+    getInitialState: function() {
+        return {
+            selectedTrader: traders.models[0]
+        }
+    },
+
     componentDidMount: function() {
         var thumb = this.refs.thumbSlider.getDOMNode();
         var detail = this.refs.detailSlider.getDOMNode(); 
@@ -378,6 +393,17 @@ var TraderCarousel = React.createClass({
             slidesToScroll: 1,
             arrows: false,
         });
+
+        var _this = this;
+        $(detail).on("afterChange", function(event, slick, currentSlide) {
+            _this.setState({
+                selectedTrader: traders.models[currentSlide]
+            });
+        });
+    },
+
+    selectedTrader: function() {
+        return this.state.selectedTrader;
     },
 
     render: function() {
@@ -461,6 +487,35 @@ var RiskSlider = React.createClass({
 var WizardScreen = React.createClass({
     componentDidMount: function() {
     },
+
+    btnFinishClicked: function() {
+        var innerRiskSlider = this.refs.riskSlider.refs.riskSlider.getDOMNode();
+        var riskFactor = $(innerRiskSlider).val();
+        var selectedTrader = this.refs.traderSelector.selectedTrader();
+
+        var allocatedMoneyNode = this.refs.allocatedMoney.getDOMNode();
+        if (allocatedMoneyNode.value === "") {
+            var allocatedMoney = allocatedMoneyNode.placeholder;
+        } else {
+            var allocatedMoney = allocatedMoneyNode.value;
+        }
+
+        var value = parseInt(allocatedMoney);
+        if (value === NaN || value < 0) {
+            alert("Số tiền phải là số dương!");
+        }
+
+        // FIXME riskFactor is not used yet
+        // FIXME Handle the error case
+        dispatcher.dispatch({
+            type: "ask_to_follow_trader",
+            trader: selectedTrader,
+            money: allocatedMoney
+        });
+
+        this.props.onCompletion();
+    },
+
     render: function() {
         var styles = {
             slider: {
@@ -478,22 +533,22 @@ var WizardScreen = React.createClass({
                 <div className="panel-body">
                   <div className="step">
                     <h3>Bước 1: Đặt mức độ rủi ro bạn sẵn sàng chấp nhận</h3>
-                    <RiskSlider style={styles.slider}/>
+                    <RiskSlider style={styles.slider} ref="riskSlider"/>
                   </div>
 
                   <div className="step">
                     <h3>Bước 2: Chọn Nhà đầu tư bạn sẽ copy chiến lược</h3>
-                    <TraderCarousel traders={traders}/>
+                    <TraderCarousel traders={traders} ref="traderSelector"/>
                   </div>
 
                   <div className="step">
                     <h3>Bước 3: Chọn số tiền đặt cho Nhà đầu tư bạn vừa chọn</h3>
-                    <input type="number" placeholder="1"/> triệu VND
+                    <input type="number" min="1" placeholder="1" ref="allocatedMoney"/> triệu VND
                   </div>
 
                   <div className="button-row clearfix">
                     <button className="btn btn-default">Bỏ qua</button>
-                    <button className="btn btn-primary">Hoàn thành</button>
+                    <button className="btn btn-primary" onClick={this.btnFinishClicked}>Hoàn thành</button>
                   </div>
                     </div>
                 </div>
@@ -501,7 +556,6 @@ var WizardScreen = React.createClass({
         );
     }
 });
-
 
 React.render(
     <App/>,
