@@ -12,7 +12,7 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 
 import vn.com.vndirect.socialtrading.App;
 
-@WebSocket
+@WebSocket (maxIdleTime=1000000)
 public class StockServiceWebSocket {
  
     private Session session;

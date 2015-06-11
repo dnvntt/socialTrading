@@ -5,13 +5,17 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import vn.com.vndirect.socialtrading.App;
 import vn.com.vndirect.socialtrading.Config;
+import vn.com.vndirect.socialtrading.entity.ExecutedOrder;
 import vn.com.vndirect.socialtrading.entity.Follower;
 import vn.com.vndirect.socialtrading.entity.FollowerEntity;
 import vn.com.vndirect.socialtrading.entity.Following;
@@ -53,6 +57,39 @@ public class LoginDao implements Dao<FollowerEntity, String> {
 		}
 
 		return follower;
+	}
+	
+	public List<ExecutedOrder> getSentOrder(String followerId) throws SQLException {
+		PreparedStatement stmt = connection
+				.prepareStatement("select * from sentorder where id= ? and date = ?");
+		stmt.setString(1, followerId);
+		Date date = new Date();
+		stmt.setDate(2, new java.sql.Date(date.getTime()));
+		
+		ResultSet rs = stmt.executeQuery();
+		List<ExecutedOrder> executedOrderList = new ArrayList<ExecutedOrder>();
+		while (rs.next()) {
+			ExecutedOrder t = parseExecutedOrder(rs);
+			executedOrderList.add(t);
+		}
+
+		return executedOrderList;
+	}
+	
+	private ExecutedOrder parseExecutedOrder(ResultSet rs) throws SQLException {
+		ExecutedOrder executedOrder = new ExecutedOrder();
+		executedOrder.setAccount(rs.getString("id"));
+		executedOrder.setOrderId(rs.getString("orderid"));
+		executedOrder.setSymbol(rs.getString("stock"));
+		executedOrder.setQty(rs.getInt("quantity"));
+		executedOrder.setPrice(rs.getInt("price"));
+		executedOrder.setMatchedQty(rs.getInt("matchedquantity"));
+		executedOrder.setMatchedPrice(rs.getInt("matchedprice"));
+		executedOrder.setSide(rs.getInt("side"));
+		executedOrder.setTradeDate(rs.getString("date"));
+		executedOrder.setTransactTime(rs.getString("transactiontime"));
+		
+		return executedOrder;
 	}
 	
 	public List<PortfolioRow> getPortfolio(String followerId) throws SQLException {

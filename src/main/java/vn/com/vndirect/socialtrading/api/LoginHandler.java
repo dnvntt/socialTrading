@@ -7,6 +7,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import spark.*;
 import vn.com.vndirect.socialtrading.dao.LoginDao;
+import vn.com.vndirect.socialtrading.entity.ExecutedOrder;
 import vn.com.vndirect.socialtrading.entity.FollowerEntity;
 import vn.com.vndirect.socialtrading.entity.Following;
 import vn.com.vndirect.socialtrading.entity.PortfolioRow;
@@ -78,6 +79,19 @@ public class LoginHandler extends AbstractHandler {
 				return mapper.writeValueAsString(portfolioRowList);
 			}
 		});
+		
+		// get open order detail of follower or trader 
+		Spark.get(PREFIX + "/follower/:id/sentorder", new Route() {
+			public Object handle(Request request, Response response)
+					throws SQLException, Exception {
+				String followerId = request.params(":id");
+				LoginDao dao = new LoginDao();
+				List<ExecutedOrder> waitingOrderList = dao
+						.getSentOrder(followerId);
+				return mapper.writeValueAsString(waitingOrderList);
+			}
+		});
+						
 				
 		// follow a trader
 		Spark.post(PREFIX + "/follower/:id/following", new Route() {
