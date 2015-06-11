@@ -10,7 +10,8 @@ dir:
 	mkdir -p .tmp
 
 js: dir
-	jsx app/js dist/scripts/
+	jsx -x jsx app/js dist/scripts/
+	jsx -x js app/js dist/scripts/
 
 css: dir
 	npm-css app/styles/main.css > dist/styles/bundle.css
