@@ -24,11 +24,12 @@ body {
   background: #EFEFEF;
 }
 
-.trader {
+.traderLine {
   padding: 10px;
+  border: 1px solid black;
 }
 
-.trader .basic-info {
+.traderLine .basic-info {
   width: 250px;
 }
 
@@ -131,7 +132,29 @@ span.accent {
   margin-bottom: 20px;
 }
 
+.wizard .step h3 {
+  margin-bottom: 20px;
+}
+
 .button-row button {
   float: right;
   margin-left: 10px;
+}
+
+
+.trader-thumb-slider img {
+    margin: 10px auto;
+    transition: 300ms ease 0s;
+}
+
+.trader-thumb-slider .slick-slide {
+    transition: 300ms ease 0s;
+}
+
+.trader-thumb-slider .slick-center {
+    background-color: #FF9900;
+}
+
+.trader-thumb-slider .slick-center img {
+    transform: scale(1.08);
 }

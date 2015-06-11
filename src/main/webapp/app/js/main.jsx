@@ -101,7 +101,7 @@ var TraderLine = React.createClass({
         }
 
         return (
-            <div className="trader clearfix">
+            <div className="traderLine clearfix">
               <div className="block">
                 <img src="/img/trader1.jpg" className="img-thumbnail"/>
               </div>
@@ -115,54 +115,22 @@ var TraderLine = React.createClass({
               </div>
 
               <div className="block">
-                <span className="text-label">Amount following</span><br/>
-                <span>${this.props.trader.get("cash")}</span><br/>
+                <span className="text-label">NAV</span><br/>
+                <strong className="text-success">${this.props.trader.get("cash")}</strong><br/>
 
-                <span className="text-label">People following</span><br/>
-                <span>{this.props.trader.get("peopleFollowing")}</span><br/>
+                <span className="text-label">Số người copy</span><br/>
+                <strong className="text-success">{this.props.trader.get("peopleFollowing")}</strong><br/>
 
-                <span className="text-label">ROI</span><br/>
-                <span>{this.props.trader.get("roi")}%</span>
               </div>
 
               <div className="block">
-                <button type="submit" 
-                        className={followBtnClasses}
-                        onClick={this.followBtnToggled}>{{followButtonText}}</button>
+                <span className="text-label">ROI</span><br/>
+                <strong className="text-success">{this.props.trader.get("roi")}%</strong>
+                {/* <button type="submit" 
+                   className={followBtnClasses}
+                   onClick={this.followBtnToggled}>{{followButtonText}}</button> */}
               </div>
             </div>
-        );
-    }
-});
-
-var RiskSlider = React.createClass({
-    // TODO: Detect when the user stops sliding then send the new value to server
-    getInitialState: function() {
-        return {
-            value: 50
-        };
-    },
-
-    onChange: function(event) {
-        var newValue = event.target.value;
-        if (newValue != this.state.value) {
-            this.setState({value: event.target.value});
-            dispatcher.dispatch({
-                type: "risk-factor-changed",
-                value: event.target.value
-            });
-        }
-    },
-
-    render: function() {
-        return (
-            <input ref="self"
-                   type="range"
-                   min="10"
-                   max="100"
-                   step="10"
-                   value={this.state.value}
-                   onChange={this.onChange}/>
         );
     }
 });
@@ -390,56 +358,143 @@ var HomeScreen = React.createClass({
 
 var TraderCarousel = React.createClass({
     componentDidMount: function() {
-        var thumb = this.refs.thumbSlider.get();
-        $(this.refs.thumbSlider.getDOMNode()).slick();
-        $(this.refs.detailSlider.getDOMNode()).slick();
+        var thumb = this.refs.thumbSlider.getDOMNode();
+        var detail = this.refs.detailSlider.getDOMNode(); 
+
+        $(thumb).slick({
+            asNavFor: $(detail),
+            slidesToShow: 3,
+            slidesToScroll: 1,
+            centerMode: true,
+            centerPadding: '60px',
+            focusOnSelect: true,
+            nextArrow: this.refs.btnNext.getDOMNode(),
+            prevArrow: this.refs.btnPrev.getDOMNode(),
+        });
+
+        $(detail).slick({
+            asNavFor: $(thumb),
+            slidesToShow: 1,
+            slidesToScroll: 1,
+            arrows: false,
+        });
     },
 
     render: function() {
+        var traderNodes = traders.map(function(trader) {
+            return <TraderLine trader={trader}/>;
+        });
+
+        var styles = {
+            next: {
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                width: 10,
+                height: '100%',
+                backgroundColor: '#AAA'
+            },
+            prev: {
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: 10,
+                height: '100%',
+                backgroundColor: '#AAA'
+            },
+            thumbSlider: {
+                position: 'relative'
+            },
+            detail: {
+                marginBottom: 20
+            }
+        };
+
         return (
             <div>
-                <div ref="detailSlider"></div>
+              <div ref="detailSlider" style={styles.detail}>
+                {traderNodes}
+              </div>
 
-                <div ref="thumbSlider">
-                  <div>your content</div>
-                  <div>your content</div>
-                  <div>your content</div>
+              <div style={styles.thumbSlider}>
+                <div ref="thumbSlider" className="trader-thumb-slider">
+                  <div><img className="img-thumbnail" src="/img/trader1.jpg"/></div>
+                  <div><img className="img-thumbnail" src="/img/trader2.jpg"/></div>
+                  <div><img className="img-thumbnail" src="/img/trader3.jpg"/></div>
+                  <div><img className="img-thumbnail" src="/img/trader1.jpg"/></div>
                 </div>
+
+                <button style={styles.next} ref="btnNext"></button>
+              <button style={styles.prev} ref="btnPrev"></button>
+              </div>
             </div>
         );
     }
 });
 
+var RiskSlider = React.createClass({
+    componentDidMount: function() {
+        var slider = this.refs.riskSlider.getDOMNode();
+        $(slider).noUiSlider({
+            start: [ 50 ],
+            step: 10,
+            connect: "lower",
+            range: {
+                'min': [  0 ],
+                'max': [ 100 ]
+            }
+        });
+
+        $(slider).noUiSlider_pips({
+            mode: "positions",
+            stepped: true,
+            values: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+            densitiy: 4
+        });
+    },
+    render: function() {
+        return (<div ref="riskSlider" style={this.props.style}></div>);
+    }
+});
+
 
 var WizardScreen = React.createClass({
+    componentDidMount: function() {
+    },
     render: function() {
+        var styles = {
+            slider: {
+                marginBottom: 60
+            }
+        };
+
         return (
             <div className="container-fluid wizard">
-                <div className="panel panel-default">
-                    <div className="panel-heading">
-                        <h2 className="panel-title">Cài đặt Tài khoản của bạn</h2>
-                    </div>
+              <div className="panel panel-default">
+                <div className="panel-heading">
+                  <h2 className="panel-title">Cài đặt Tài khoản của bạn</h2>
+                </div>
 
-                    <div className="panel-body">
-                        <div className="step">
-                            <h3>Bước 1: Đặt mức độ rủi ro bạn sẵn sàng chấp nhận</h3>
-                            <RiskSlider/>
-                        </div>
+                <div className="panel-body">
+                  <div className="step">
+                    <h3>Bước 1: Đặt mức độ rủi ro bạn sẵn sàng chấp nhận</h3>
+                    <RiskSlider style={styles.slider}/>
+                  </div>
 
-                        <div className="step">
-                            <h3>Bước 2: Chọn Nhà đầu tư bạn sẽ copy chiến lược</h3>
-                            <TraderCarousel traders={traders}/>
-                        </div>
+                  <div className="step">
+                    <h3>Bước 2: Chọn Nhà đầu tư bạn sẽ copy chiến lược</h3>
+                    <TraderCarousel traders={traders}/>
+                  </div>
 
-                        <div className="step">
-                            <h3>Bước 3: Chọn số tiền đặt cho Nhà đầu tư bạn vừa chọn</h3>
-                            <input type="text"/> triệu VND
-                        </div>
+                  <div className="step">
+                    <h3>Bước 3: Chọn số tiền đặt cho Nhà đầu tư bạn vừa chọn</h3>
+                    <input type="number" placeholder="1"/> triệu VND
+                  </div>
 
-                        <div className="button-row clearfix">
-                            <button className="btn btn-primary">Hoàn thành</button>
-                            <button className="btn btn-default">Bỏ qua</button>
-                        </div>
+                  <div className="button-row clearfix">
+                    <button className="btn btn-default">Bỏ qua</button>
+                    <button className="btn btn-primary">Hoàn thành</button>
+                  </div>
                     </div>
                 </div>
             </div>
