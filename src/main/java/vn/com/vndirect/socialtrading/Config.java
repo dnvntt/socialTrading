@@ -11,6 +11,8 @@ public class Config {
     public static String EXCHANGE_NAME_SENT = "NotiCenter.Exchange.SentOrder";
     public static String QUEUE_NAME_EXECUTED = "executedOrderList2";
     public static String EXCHANGE_NAME_EXECUTED = "NotiCenter.Exchange.ExecutedOrder";
+    public static String QUEUE_NAME_EXPIRED = "expiredOrderList2";
+    public static String EXCHANGE_NAME_EXPIRED = "NotiCenter.Exchange.ExpiredOrder";
 
     public static String RABBIT_HOST = "10.25.1.94";
     public static int RABBIT_PORT = 5672;

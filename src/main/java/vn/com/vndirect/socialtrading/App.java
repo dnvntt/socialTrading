@@ -112,17 +112,16 @@ public class App {
 	private OrderService orderService;
 	private QueueingConsumer consumerSent;
 	private QueueingConsumer consumerExecuted;
+	private QueueingConsumer consumerExpired;
 	private java.sql.Connection connection = null;
 
 	public static Map<String, List<Follower>> mapOfTrader; // map signalprovider
 															// id with
 	// list of follower
-	public static Map<String, Integer> listOfStock; // list all stock with its risk 
+	public static Map<String, Integer> listOfStock; // list all stocks with its risks
 
 	public static Map<String, TraderEntity> listOfTraderEntity; // list all
-																// trader or
-																// signal
-																// provider
+																// trader entity
 
 	public static Map<String, FollowerEntity> listOfFollowerEntity; // list all
 																	// follower
@@ -154,6 +153,9 @@ public class App {
 				Config.EXCHANGE_NAME_SENT, conn);
 		consumerExecuted = defineConsumer(Config.QUEUE_NAME_EXECUTED,
 				Config.EXCHANGE_NAME_EXECUTED, conn);
+		
+		consumerExpired = defineConsumer(Config.QUEUE_NAME_EXPIRED,
+				Config.EXCHANGE_NAME_EXPIRED, conn);
 
 		mapper = new ObjectMapper();
 //		orderService = new OrderServiceImpl();
@@ -184,6 +186,8 @@ public class App {
 					e.printStackTrace();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
+				} catch (SQLException e) {
+					e.printStackTrace();
 				}
 			}
 		});
@@ -205,6 +209,25 @@ public class App {
 			}
 		});
 		t2.start();
+		
+		Thread t3 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					while (true) {
+						processMessageExpired();
+					}
+				} catch (ShutdownSignalException e) {
+					e.printStackTrace();
+				} catch (ConsumerCancelledException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		t3.start();
 	}
 
 	private void reloadData() {
@@ -323,8 +346,7 @@ public class App {
 	}
 
 	public static int getFloorPrice(String symbol) throws IOException {
-		String link = "http://10.26.0.165:8000/sInfo?sym=" + symbol + "&ex="
-				+ 2; // 1 cho hcm, 2 cho hn
+		String link = "http://10.26.0.165:8000/sInfo?sym=" + symbol + "&ex="+ 2; // 1 cho hcm, 2 cho hn
 		URL url = new URL(link);
 		BufferedReader br = new BufferedReader(new InputStreamReader(
 				url.openStream()));
@@ -421,7 +443,7 @@ public class App {
 	}
 
 	public void processMessageSent() throws ShutdownSignalException,
-			ConsumerCancelledException, InterruptedException {
+			ConsumerCancelledException, InterruptedException, SQLException {
 		QueueingConsumer.Delivery delivery = consumerSent.nextDelivery();
 		String message = new String(delivery.getBody());
 		System.out.println(message);
@@ -433,8 +455,9 @@ public class App {
 
 			for (SendOrder followerOrder : followerOrders) {
 				try {
+					String accountOfFollower = followerOrder.getAccount();
 					Report report = orderService
-							.executePlaceOrder(followerOrder.getAccount(),
+							.executePlaceOrder(accountOfFollower,
 									Integer.toString(followerOrder.getSide())
 											.charAt(0),
 									followerOrder.getType() == 1 ? "MP" : "LO",
@@ -451,12 +474,12 @@ public class App {
 						OrderPendingList.add(order_id_return);
 						OrderPendingFollower.put(order_id_return,orderByTrader.getAccount());
 						
+						SimpleDateFormat formatTime = new SimpleDateFormat("hh:mm:ss");
+						DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-hh:mm:ss");
+						Date date = new Date();
 						//send thong tin lenh cho follower
 						Session clientSession = mapOfSession.get(followerOrder.getAccount());
 						if(clientSession !=null) {
-							DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-							Date date = new Date();
-
 							String msgPush = "SentOrder:" + order_id_return
 									+ "," + followerOrder.getSide() + ","
 									+ followerOrder.getType() + ","
@@ -467,9 +490,43 @@ public class App {
 
 							clientSession.getRemote().sendString(msgPush);
 						}
+						// update account
+						if (followerOrder.getSide() == 1) {
+							PreparedStatement accountUpdateSt = connection
+									.prepareStatement("UPDATE account SET cash = ? WHERE id = ?");
+							accountUpdateSt.setString(2, accountOfFollower);
+
+							float cashUpdate = listOfFollowerEntity.get(
+									accountOfFollower).getCash()
+									- followerOrder.getPrice()
+									* followerOrder.getQty();
+							listOfFollowerEntity.get(accountOfFollower)
+									.setCash(cashUpdate);
+
+							accountUpdateSt.setFloat(1, cashUpdate);
+							accountUpdateSt.executeUpdate();
+							accountUpdateSt.close();
+						}
+
+						PreparedStatement insertSendOrder = connection
+								.prepareStatement("insert into sentorder (orderid,stock,side,quantity,price,type,date,id,transactiontime) values (?,?,?,?,?,?,?,?,?)");
+						insertSendOrder.setString(1, order_id_return);
+						insertSendOrder.setString(2, followerOrder.getSymbol());
+						insertSendOrder.setInt(3, followerOrder.getSide());
+						insertSendOrder.setInt(4, followerOrder.getQty());
+						insertSendOrder.setInt(5, followerOrder.getPrice());
+						insertSendOrder.setInt(6, followerOrder.getType());
+						//Timestamp sentDate = convertToSqlDate(dateFormat.format(date));
+						//insertSendOrder.setTimestamp(7, sentDate);
+						insertSendOrder.setDate(7, new java.sql.Date(date.getTime()));
+						insertSendOrder.setString(8, followerOrder.getAccount());
+						insertSendOrder.setString(9, formatTime.format(date));
+						
+						insertSendOrder.executeUpdate();
+						insertSendOrder.close();
+
 					}
 				} catch (OrderException e) {
-					// FIXME: What to do if this order fails to send?
 					e.printStackTrace();
 				}
 			}
@@ -693,16 +750,13 @@ public class App {
 			rs.close();
 
 			// update account
-			PreparedStatement accountUpdateSt = conn
-					.prepareStatement("UPDATE account SET cash = ? WHERE id = ?");
-			accountUpdateSt.setString(2, accountId);
-
-			if (order.getSide() == 1)
-				accountUpdateSt.setFloat(1, cash - quantity * price);
-			else
+			if (order.getSide() == 2){
+				PreparedStatement accountUpdateSt = conn
+						.prepareStatement("UPDATE account SET cash = ? WHERE id = ?");
+				accountUpdateSt.setString(2, accountId);
 				accountUpdateSt.setFloat(1, cash + quantity * price);
-
-			accountUpdateSt.executeUpdate();
+				accountUpdateSt.executeUpdate();
+			}
 
 			// update transaction
 			if (order.getSide() == 1) {
@@ -735,6 +789,41 @@ public class App {
 		}
 
 		st.close();
+	}
+	
+	public void processMessageExpired() throws ShutdownSignalException, ConsumerCancelledException, InterruptedException, SQLException 
+	{
+		QueueingConsumer.Delivery delivery = consumerExpired.nextDelivery();
+		String message = new String(delivery.getBody());
+		System.out.println(message);
+		SendOrder expiredOrder  = null;
+		
+		try {
+			expiredOrder = mapper.readValue(message, SendOrder.class);
+			OrderPendingList.remove(expiredOrder.getOrderId());
+			String traderId= OrderPendingFollower.get(expiredOrder.getOrderId());
+			
+			// update account
+			if (traderId!= null && expiredOrder.getSide() == 1){
+				String account = expiredOrder.getAccount();
+				PreparedStatement accountUpdateSt = connection
+						.prepareStatement("UPDATE account SET cash = ? WHERE id = ?");
+				accountUpdateSt.setString(2, account);
+				
+				float cashUpdate=  listOfFollowerEntity.get(account).getCash() + expiredOrder.getPrice() * expiredOrder.getQty();
+				listOfFollowerEntity.get(account).setCash(cashUpdate);
+				
+				accountUpdateSt.setFloat(1,cashUpdate);
+				accountUpdateSt.executeUpdate();
+				accountUpdateSt.close();
+				
+				OrderPendingFollower.remove(expiredOrder.getOrderId());
+				OrderPendingMap.get(traderId).remove(expiredOrder.getOrderId());
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }
