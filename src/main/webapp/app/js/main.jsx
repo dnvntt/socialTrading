@@ -206,6 +206,7 @@ var App = React.createClass({
                 case "auth.authenticated":
                     _this.setState({authChecking: false, loggedIn: true, screen: "wizard"});
                     _this.forceUpdate();
+                    me.fetch();
             }
         });
     },
@@ -261,7 +262,7 @@ var App = React.createClass({
         } else if (this.state.screen === "wizard") {
             inner = <WizardScreen onCompletion={this.wizardCompleted}/>
         } else if (this.state.screen === "account") {
-            inner = <TraderList traders={traders}/>
+            inner = <AccountScreen/>
         }
 
         return (
@@ -510,7 +511,7 @@ var WizardScreen = React.createClass({
         dispatcher.dispatch({
             type: "ask_to_follow_trader",
             trader: selectedTrader,
-            money: allocatedMoney
+            allocatedMoney: allocatedMoney
         });
 
         this.props.onCompletion();
@@ -524,33 +525,31 @@ var WizardScreen = React.createClass({
         };
 
         return (
-            <div className="container-fluid wizard">
-              <div className="panel panel-default">
-                <div className="panel-heading">
-                  <h2 className="panel-title">Cài đặt Tài khoản của bạn</h2>
-                </div>
+          <div className="panel panel-default wizard">
+            <div className="panel-heading">
+              <h2 className="panel-title">Cài đặt Tài khoản của bạn</h2>
+            </div>
 
-                <div className="panel-body">
-                  <div className="step">
-                    <h3>Bước 1: Đặt mức độ rủi ro bạn sẵn sàng chấp nhận</h3>
-                    <RiskSlider style={styles.slider} ref="riskSlider"/>
-                  </div>
+            <div className="panel-body">
+              <div className="step">
+                <h3>Bước 1: Đặt mức độ rủi ro bạn sẵn sàng chấp nhận</h3>
+                <RiskSlider style={styles.slider} ref="riskSlider"/>
+              </div>
 
-                  <div className="step">
-                    <h3>Bước 2: Chọn Nhà đầu tư bạn sẽ copy chiến lược</h3>
-                    <TraderCarousel traders={traders} ref="traderSelector"/>
-                  </div>
+              <div className="step">
+                <h3>Bước 2: Chọn Nhà đầu tư bạn sẽ copy chiến lược</h3>
+                <TraderCarousel traders={traders} ref="traderSelector"/>
+              </div>
 
-                  <div className="step">
-                    <h3>Bước 3: Chọn số tiền đặt cho Nhà đầu tư bạn vừa chọn</h3>
-                    <input type="number" min="1" placeholder="1" ref="allocatedMoney"/> triệu VND
-                  </div>
+              <div className="step">
+                <h3>Bước 3: Chọn số tiền đặt cho Nhà đầu tư bạn vừa chọn</h3>
+                <input type="number" min="1" placeholder="1" ref="allocatedMoney"/> triệu VND
+              </div>
 
-                  <div className="button-row clearfix">
-                    <button className="btn btn-default">Bỏ qua</button>
-                    <button className="btn btn-primary" onClick={this.btnFinishClicked}>Hoàn thành</button>
-                  </div>
-                    </div>
+              <div className="button-row clearfix">
+                <button className="btn btn-default">Bỏ qua</button>
+                <button className="btn btn-primary" onClick={this.btnFinishClicked}>Hoàn thành</button>
+              </div>
                 </div>
             </div>
         );
