@@ -15,7 +15,7 @@
 		<dependency>
 			<groupId>vn.com.vndirect.ors</groupId>
 			<artifactId>ors-client-api</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.2</version>
 		</dependency>
 
 		<dependency>
