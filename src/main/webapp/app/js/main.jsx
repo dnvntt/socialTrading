@@ -204,11 +204,15 @@ var App = React.createClass({
         dispatcher.register(function(message) {
             switch(message.type) {
                 case "auth.authenticated":
-                    _this.setState({authChecking: false, loggedIn: true, screen: "wizard"});
-                    _this.forceUpdate();
+                    _this.setState({authChecking: false, loggedIn: true});
+                    _this.props.router.navigate("wizard", {trigger: true});
                     me.fetch();
             }
         });
+
+        this.props.router.on("route", function() {
+            _this.forceUpdate();
+        })
     },
 
     getInitialState: function() {
@@ -224,7 +228,6 @@ var App = React.createClass({
                 });
 
         return {
-            screen: "home",
             authChecking: true,
             loggedIn: false
         };
@@ -232,36 +235,27 @@ var App = React.createClass({
 
     startInvesting: function() {
         // TODO Check if this is the first time this user logged in
-
-        this.setState({
-            screen: this.state.loggedIn ? "wizard" : "login"
-        });
-
-        this.forceUpdate();
+        this.props.router.navigate(this.state.loggedIn ? "wizard" : "login", {trigger: true});
     },
 
     wizardCompleted: function() {
-        this.setState({
-            screen: "account"
-        });
-
-        this.forceUpdate();
+        this.props.router.navigate("account", {trigger: true});
     },
 
     render: function() {
         // FIXME Proper routing
         var inner;
-        if (this.state.screen === "home") {
+        if (this.props.router.current === "index") {
             inner = <HomeScreen onTransit={this.startInvesting}/>;
-        } else if (this.state.screen === "login") {
+        } else if (this.props.router.current === "login") {
             if (this.state.authChecking) {
                 inner = (<h2>Checking authentication...</h2>);
             } else {
                 inner = <LoginScreen/>;
             }
-        } else if (this.state.screen === "wizard") {
+        } else if (this.props.router.current === "wizard") {
             inner = <WizardScreen onCompletion={this.wizardCompleted}/>
-        } else if (this.state.screen === "account") {
+        } else if (this.props.router.current === "account") {
             inner = <AccountScreen/>
         }
 
@@ -556,9 +550,36 @@ var WizardScreen = React.createClass({
     }
 });
 
+var Router = Backbone.Router.extend({
+    routes: {
+        "": "index",
+        "login": "login",
+        "wizard": "wizard",
+        "account": "account"
+    },
+
+    index: function() {
+        this.current = "index";
+    },
+
+    login: function() {
+        this.current = "login";
+    },
+
+    wizard: function() {
+        this.current = "wizard";
+    },
+
+    account: function() {
+        this.current = "account";
+    }
+});
+
+router = new Router();
+Backbone.history.start();
+traders.fetch();
+
 React.render(
-    <App/>,
+    <App router={router}/>,
     document.getElementById('example')
 );
-
-traders.fetch();
