@@ -24,8 +24,12 @@ import vn.com.vndirect.socialtrading.entity.TraderEntity;
 
 public class LoginDao implements Dao<FollowerEntity, String> {
 	private Connection connection;
-	public LoginDao() throws SQLException {
-		connection = connectToDB();
+	public LoginDao() {
+		try {
+			connection = connectToDB();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private Connection connectToDB() throws SQLException {
