@@ -10,7 +10,19 @@ import vn.com.vndirect.socialtrading.entity.Following;
 import vn.com.vndirect.socialtrading.entity.PortfolioRow;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+
+
+class JsonTransformer implements ResponseTransformer {
+	private ObjectMapper mapper = new ObjectMapper();
+
+	@Override
+	public String render(Object model) throws Exception {
+		return mapper.writeValueAsString(model);
+	}
+}
+
 
 public class LoginHandler extends AbstractHandler {
 	public LoginHandler() {
@@ -44,22 +56,22 @@ public class LoginHandler extends AbstractHandler {
 
 				if (follower == null) {
 					response.status(404);
-					return "Fail";
+					return null;
 				} else {
 					Session session = request.session(true);
 					session.attribute("id", follower.getId());
 					response.status(200);
-					return mapper.writeValueAsString(follower);
+					return follower;
 				}
 			}
-		});
+		}, new JsonTransformer());
 
 		Spark.post(PREFIX + "/logout", new Route() {
 			public Object handle(Request request, Response response) throws Exception {
 				request.session().invalidate();
-				return "ok";
+				return null;
 			}
-		});
+		}, new JsonTransformer());
 
 		Spark.get(PREFIX + "/me", new Route() {
 			public Object handle(Request request, Response response) throws Exception {
@@ -70,29 +82,18 @@ public class LoginHandler extends AbstractHandler {
 					return null;
 				} else {
 					FollowerEntity follower = dao.get(userId);
-					return mapper.writeValueAsString(follower);
+					return follower;
 				}
 			}
-		});
+		}, new JsonTransformer());
 
 		Spark.put(PREFIX + "/me", new Route() {
 			@Override
 			public Object handle(Request request, Response response) throws Exception {
 				response.redirect(PREFIX + "/follower/" + request.session().attribute("id"));
-				return "";
+				return null;
 			}
-		});
-
-		// List all traders this follower is following
-		Spark.get(PREFIX + "/follower/:id/following", new Route() {
-			public Object handle(Request request, Response response)
-					throws SQLException, Exception {
-				String followerId = request.params(":id");
-				LoginDao dao = new LoginDao();
-				List<Following> followingList = dao.getAccount(followerId);
-				return mapper.writeValueAsString(followingList);
-			}
-		});
+		}, new JsonTransformer());
 
 		// get portfolio's detail of follower or trader 
 		Spark.get(PREFIX + "/follower/:id/portfolio", new Route() {
@@ -101,9 +102,9 @@ public class LoginHandler extends AbstractHandler {
 				String followerId = request.params(":id");
 				LoginDao dao = new LoginDao();
 				List<PortfolioRow> portfolioRowList = dao.getPortfolio(followerId);
-				return mapper.writeValueAsString(portfolioRowList);
+				return portfolioRowList;
 			}
-		});
+		}, new JsonTransformer());
 		
 		// get open order detail of follower or trader 
 		Spark.get(PREFIX + "/follower/:id/sentorder", new Route() {
@@ -113,50 +114,64 @@ public class LoginHandler extends AbstractHandler {
 				LoginDao dao = new LoginDao();
 				List<ExecutedOrder> waitingOrderList = dao
 						.getSentOrder(followerId);
-				return mapper.writeValueAsString(waitingOrderList);
+				return waitingOrderList;
 			}
-		});
-						
-				
+		}, new JsonTransformer());
+
+		// List all traders this follower is following
+		Spark.get(PREFIX + "/follower/:id/following", new Route() {
+			public Object handle(Request request, Response response)
+					throws SQLException, Exception {
+				String followerId = request.params(":id");
+				LoginDao dao = new LoginDao();
+				List<Following> followingList = dao.getAccount(followerId);
+				return followingList;
+			}
+		}, new JsonTransformer());
+
 		// follow a trader
 		Spark.post(PREFIX + "/follower/:id/following", new Route() {
 			public Object handle(Request request, Response response)
-					throws SQLException, Exception {
-				// FIXME This method always returns 200 OK even on error
-
+					throws Exception {
 				String followerId = request.params(":id");
-				String traderId = request.queryParams("traderid");
+				String traderId = request.queryParams("traderId");
 
 				try {
-					int moneyAllocate = Integer.parseInt(request
+					float moneyAllocate = Float.parseFloat(request
 							.queryParams("money"));
-					int maxOpen = Integer.parseInt(request.queryParams("maxopen"));
+					int maxOpen = Integer.parseInt(request.queryParams("maxOpen"));
 
 					LoginDao dao = new LoginDao();
 
 					dao.followTrader(followerId, traderId, moneyAllocate, maxOpen);
-				} catch (NumberFormatException e) {
-					Spark.halt(400);
-				}
+					HashMap<String, Object> result = new HashMap<>();
+					result.put("id", followerId);
+					result.put("traderId", traderId);
+					result.put("money", moneyAllocate);
+					result.put("maxOpen", maxOpen);
 
-				return "";
+					return result;
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+					Spark.halt(400);
+					return null;
+				}
 			}
-		});
+		}, new JsonTransformer());
 
 		// unfollow a trader
 		Spark.delete(PREFIX + "/follower/:id/following/:traderid", new Route() {
 			public Object handle(Request request, Response response)
 					throws Exception {
-				String traderId = request.params(":traderid");
+				String traderId = request.params(":traderId");
 				String followerId = request.params(":id");
 
 				LoginDao dao = new LoginDao();
 				dao.unfollowTrader(followerId, traderId);
 
-				response.status(200);
-				return "ok";
+				return null;
 			}
-		});
+		}, new JsonTransformer());
 
 		// Update a follower
 		Spark.put(PREFIX + "/follower/:id", new Route() {
@@ -183,13 +198,12 @@ public class LoginHandler extends AbstractHandler {
 
 				if (ok) {
 					response.status(200);
-					return "{}";  // Backbone.Model.save() expects a valid JSON response
 				} else {
 					response.status(500);
-					return "Error, please ask the admin to check the log.";
 				}
+				return null;
 			}
-		});
+		}, new JsonTransformer());
 
 	}
 }

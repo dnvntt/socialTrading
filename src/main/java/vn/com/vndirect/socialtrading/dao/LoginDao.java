@@ -171,14 +171,14 @@ public class LoginDao implements Dao<FollowerEntity, String> {
 		return following;
 	}
 
-	public void followTrader(String followerId, String traderId, int money,
+	public void followTrader(String followerId, String traderId, float money,
 			int maxOpen) throws SQLException {
 		PreparedStatement stmt = connection
 				.prepareStatement("insert into  following (id,traderid,moneyallocate,maxopen,transactionid) VALUES (?,?,?,?,?);");
 		String transactionId = followerId + "_" + traderId;
 		stmt.setString(1, followerId);
 		stmt.setString(2, traderId);
-		stmt.setInt(3, money);
+		stmt.setFloat(3, money);
 		stmt.setInt(4, maxOpen);
 		stmt.setString(5, transactionId);
 
