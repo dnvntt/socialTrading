@@ -55,7 +55,7 @@ public class LoginDao implements Dao<FollowerEntity, String> {
 	}
 
 	public FollowerEntity getFollower(String id) {
-		String query = "SELECT * FROM account where  username =? and password =?";
+		String query = "SELECT * FROM account WHERE id = ?";
 		FollowerEntity follower = null;
 
 		try (Connection conn = connectToDB();
