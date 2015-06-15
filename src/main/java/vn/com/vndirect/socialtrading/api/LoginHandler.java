@@ -26,6 +26,10 @@ class JsonTransformer implements ResponseTransformer {
 
 public class LoginHandler extends AbstractHandler {
 	public LoginHandler() {
+		this(new LoginDao());
+	}
+
+	public LoginHandler(final LoginDao loginDao) {
 		final ObjectMapper mapper = new ObjectMapper();
 
 		// Set this config key so that when the client pushes an object with alien properties,
@@ -51,8 +55,7 @@ public class LoginHandler extends AbstractHandler {
 					throws SQLException, Exception {
 				String user = request.queryParams("user");
 				String password = request.queryParams("pass");
-				LoginDao dao = new LoginDao();
-				FollowerEntity follower = dao.authenticate(user, password);
+				FollowerEntity follower = loginDao.authenticate(user, password);
 
 				if (follower == null) {
 					response.status(404);
@@ -75,13 +78,12 @@ public class LoginHandler extends AbstractHandler {
 
 		Spark.get(PREFIX + "/me", new Route() {
 			public Object handle(Request request, Response response) throws Exception {
-				LoginDao dao = new LoginDao();
 				String userId = (String) request.session().attribute("id");
 				if (userId == null) {
 					Spark.halt(401);
 					return null;
 				} else {
-					FollowerEntity follower = dao.get(userId);
+					FollowerEntity follower = loginDao.get(userId);
 					return follower;
 				}
 			}
@@ -100,8 +102,7 @@ public class LoginHandler extends AbstractHandler {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
 				String followerId = request.params(":id");
-				LoginDao dao = new LoginDao();
-				List<PortfolioRow> portfolioRowList = dao.getPortfolio(followerId);
+				List<PortfolioRow> portfolioRowList = loginDao.getPortfolio(followerId);
 				return portfolioRowList;
 			}
 		}, new JsonTransformer());
@@ -111,8 +112,7 @@ public class LoginHandler extends AbstractHandler {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
 				String followerId = request.params(":id");
-				LoginDao dao = new LoginDao();
-				List<ExecutedOrder> waitingOrderList = dao
+				List<ExecutedOrder> waitingOrderList = loginDao
 						.getSentOrder(followerId);
 				return waitingOrderList;
 			}
@@ -123,8 +123,7 @@ public class LoginHandler extends AbstractHandler {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
 				String followerId = request.params(":id");
-				LoginDao dao = new LoginDao();
-				List<Following> followingList = dao.getAccount(followerId);
+				List<Following> followingList = loginDao.getAccount(followerId);
 				return followingList;
 			}
 		}, new JsonTransformer());
@@ -141,9 +140,7 @@ public class LoginHandler extends AbstractHandler {
 							.queryParams("money"));
 					int maxOpen = Integer.parseInt(request.queryParams("maxOpen"));
 
-					LoginDao dao = new LoginDao();
-
-					dao.followTrader(followerId, traderId, moneyAllocate, maxOpen);
+					loginDao.followTrader(followerId, traderId, moneyAllocate, maxOpen);
 					HashMap<String, Object> result = new HashMap<>();
 					result.put("id", followerId);
 					result.put("traderId", traderId);
@@ -166,8 +163,7 @@ public class LoginHandler extends AbstractHandler {
 				String traderId = request.params(":traderId");
 				String followerId = request.params(":id");
 
-				LoginDao dao = new LoginDao();
-				dao.unfollowTrader(followerId, traderId);
+				loginDao.unfollowTrader(followerId, traderId);
 
 				return null;
 			}
@@ -181,9 +177,7 @@ public class LoginHandler extends AbstractHandler {
 					Spark.halt(401);
 				}
 
-				LoginDao dao = new LoginDao();
-
-				FollowerEntity current = dao.getFollower(request.params(":id"));
+				FollowerEntity current = loginDao.getFollower(request.params(":id"));
 				FollowerEntity updated = null;
 
 				// TODO: Validation. Null check.
@@ -194,7 +188,7 @@ public class LoginHandler extends AbstractHandler {
 				}
 
 				updated.setId(current.getId());
-				boolean ok = dao.save(updated);
+				boolean ok = loginDao.save(updated);
 
 				if (ok) {
 					response.status(200);
