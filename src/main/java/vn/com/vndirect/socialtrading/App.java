@@ -131,7 +131,7 @@ public class App {
 				Config.EXCHANGE_NAME_EXPIRED, conn);
 
 		mapper = new ObjectMapper();
-		orderService = new OrderServiceImpl();
+		orderService = OrderServiceImpl.getInstances();
 		mapOfTrader = new HashMap<String, List<Follower>>();
 		listOfStock = new HashMap<String, Integer>();
 		listOfTraderEntity = new HashMap<String, TraderEntity>();
@@ -428,10 +428,9 @@ public class App {
 			for (SendOrder followerOrder : followerOrders) {
 				try {
 					String accountOfFollower = followerOrder.getAccount();
+					String side = followerOrder.getSide() ==1 ? "NB":"NS";
 					Report report = orderService
-							.executePlaceOrder(accountOfFollower,
-									Integer.toString(followerOrder.getSide())
-											.charAt(0) == 0 ? "NS" : "NB",
+							.executePlaceOrder(accountOfFollower,side,
 									followerOrder.getType() == 1 ? "MP" : "LO",
 									followerOrder.getSymbol(), followerOrder
 											.getPrice(), followerOrder.getQty());
