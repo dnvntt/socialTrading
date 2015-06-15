@@ -1,21 +1,24 @@
 package vn.com.vndirect.socialtrading.api;
 
-import java.sql.SQLException;
-import java.util.List;
-
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
-
 import spark.*;
-import spark.servlet.SparkApplication;
 import vn.com.vndirect.socialtrading.dao.LoginDao;
 import vn.com.vndirect.socialtrading.entity.ExecutedOrder;
 import vn.com.vndirect.socialtrading.entity.FollowerEntity;
 import vn.com.vndirect.socialtrading.entity.Following;
 import vn.com.vndirect.socialtrading.entity.PortfolioRow;
 
+import java.sql.SQLException;
+import java.util.List;
+
 public class LoginHandler extends AbstractHandler {
 	public LoginHandler() {
 		final ObjectMapper mapper = new ObjectMapper();
+
+		// Set this config key so that when the client pushes an object with alien properties,
+		// we don't die.
+		mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
 //		Spark.before(new Filter() {
 //			public void handle(Request request, Response response) throws Exception {
@@ -64,6 +67,14 @@ public class LoginHandler extends AbstractHandler {
 				System.out.println(request.session().attribute("id"));
 				FollowerEntity follower = dao.get((String) request.session().attribute("id"));
 				return mapper.writeValueAsString(follower);
+			}
+		});
+
+		Spark.put(PREFIX + "/me", new Route() {
+			@Override
+			public Object handle(Request request, Response response) throws Exception {
+				response.redirect(PREFIX + "/follower/" + request.session().attribute("id"));
+				return "";
 			}
 		});
 
