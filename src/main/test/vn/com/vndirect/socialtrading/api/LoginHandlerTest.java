@@ -95,6 +95,9 @@ public class LoginHandlerTest {
         assertEquals(money, postResultBody.getDouble("money"), 0.001);
         assertEquals(maxOpen, postResultBody.getInt("maxOpen"));
         assertEquals(traderId, postResultBody.getString("traderId"));
+
+        // Verify that the new relationship is saved
+        Mockito.verify(loginDao).followTrader(followerId, traderId, money, maxOpen);
     }
 
     @Test
