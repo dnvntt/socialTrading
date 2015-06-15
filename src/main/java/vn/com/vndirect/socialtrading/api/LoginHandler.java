@@ -164,15 +164,21 @@ public class LoginHandler extends AbstractHandler {
 				LoginDao dao = new LoginDao();
 
 				FollowerEntity current = dao.getFollower(request.params(":id"));
-				FollowerEntity updated = mapper.readValue(request.body(), FollowerEntity.class);
+				FollowerEntity updated = null;
 
 				// TODO: Validation. Null check.
+				try {
+					updated = mapper.readValue(request.body(), FollowerEntity.class);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
 				updated.setId(current.getId());
 				boolean ok = dao.save(updated);
 
 				if (ok) {
 					response.status(200);
-					return "Ok.";
+					return "{}";  // Backbone.Model.save() expects a valid JSON response
 				} else {
 					response.status(500);
 					return "Error, please ask the admin to check the log.";
