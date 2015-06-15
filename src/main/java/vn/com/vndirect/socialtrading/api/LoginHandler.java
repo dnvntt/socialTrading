@@ -53,7 +53,7 @@ public class LoginHandler extends AbstractHandler {
 
 		Spark.post(PREFIX + "/logout", new Route() {
 			public Object handle(Request request, Response response) throws Exception {
-				request.session(false);
+				request.session().invalidate();
 				return "ok";
 			}
 		});
