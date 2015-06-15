@@ -64,7 +64,6 @@ public class LoginHandler extends AbstractHandler {
 		Spark.get(PREFIX + "/me", new Route() {
 			public Object handle(Request request, Response response) throws Exception {
 				LoginDao dao = new LoginDao();
-				System.out.println(request.session().attribute("id"));
 				FollowerEntity follower = dao.get((String) request.session().attribute("id"));
 				return mapper.writeValueAsString(follower);
 			}
