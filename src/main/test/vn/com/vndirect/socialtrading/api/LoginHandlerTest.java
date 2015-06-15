@@ -77,20 +77,20 @@ public class LoginHandlerTest {
     public void followATrader() throws UnirestException {
         String traderId = "0001052458";
         String followerId = "0001210287";
+        float money = 323;
+        int maxOpen = 3;
 
         // We are following no one
         Mockito.when(loginDao.getAccount(followerId)).thenReturn(new ArrayList<Following>());
-
-        float money = 323;
-        int maxOpen = 3;
 
         HttpResponse<JsonNode> res = Unirest.post(BASE_URL + "/follower/{userId}/following")
                 .routeParam("userId", followerId)
                 .field("traderId", traderId)
                 .field("money", money)
                 .field("maxOpen", maxOpen).asJson();
-        assertEquals(200, res.getStatus());
 
+        // Check that the request is made successfully and the new relationship is returned
+        assertEquals(200, res.getStatus());
         JSONObject postResultBody = res.getBody().getObject();
         assertEquals(money, postResultBody.getDouble("money"), 0.001);
         assertEquals(maxOpen, postResultBody.getInt("maxOpen"));
@@ -103,12 +103,14 @@ public class LoginHandlerTest {
 
         ArrayList<Following> followings = new ArrayList<>();
         followings.add(new Following());
+        followings.add(new Following());
+        followings.add(new Following());
         Mockito.when(loginDao.getAccount(userId)).thenReturn(followings);
 
         HttpResponse<JsonNode> res = Unirest.get(BASE_URL + "/follower/{userId}/following")
                 .routeParam("userId", userId)
                 .asJson();
         assertEquals(200, res.getStatus());
-        assertTrue(res.getBody().getArray().length() == 1);
+        assertTrue(res.getBody().getArray().length() == 3);
     }
 }
