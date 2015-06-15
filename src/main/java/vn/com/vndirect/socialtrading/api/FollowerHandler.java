@@ -14,16 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 
 
-class JsonTransformer implements ResponseTransformer {
-	private ObjectMapper mapper = new ObjectMapper();
-
-	@Override
-	public String render(Object model) throws Exception {
-		return mapper.writeValueAsString(model);
-	}
-}
-
-
 public class FollowerHandler extends AbstractHandler {
 	public FollowerHandler() {
 		this(new FollowerDao());
