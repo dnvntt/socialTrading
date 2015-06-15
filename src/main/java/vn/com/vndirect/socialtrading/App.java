@@ -31,11 +31,10 @@ import org.eclipse.jetty.websocket.api.Session;
 import spark.Spark;
 import vn.com.vndirect.ors.client.api.OrderService;
 import vn.com.vndirect.ors.client.api.OrderServiceImpl;
-import vn.com.vndirect.ors.client.api.entity.OrderReport;
 import vn.com.vndirect.ors.client.api.entity.Report;
 import vn.com.vndirect.ors.client.api.utils.OrderException;
 import vn.com.vndirect.socialtrading.api.ApiHandler;
-import vn.com.vndirect.socialtrading.api.LoginHandler;
+import vn.com.vndirect.socialtrading.api.FollowerHandler;
 import vn.com.vndirect.socialtrading.entity.ExecutedOrder;
 import vn.com.vndirect.socialtrading.entity.Follower;
 import vn.com.vndirect.socialtrading.entity.FollowerEntity;
@@ -58,7 +57,7 @@ public class App {
 		App app = null;
 		Spark.externalStaticFileLocation("src/main/webapp/dist");
 		new ApiHandler();
-		new LoginHandler();
+		new FollowerHandler();
 
 		TimerTask task = new UpdateProfitTask();
 		Timer timer = new Timer();

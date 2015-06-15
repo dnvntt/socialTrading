@@ -22,9 +22,9 @@ import vn.com.vndirect.socialtrading.entity.Following;
 import vn.com.vndirect.socialtrading.entity.PortfolioRow;
 import vn.com.vndirect.socialtrading.entity.TraderEntity;
 
-public class LoginDao implements Dao<FollowerEntity, String> {
+public class FollowerDao implements Dao<FollowerEntity, String> {
 	private Connection connection;
-	public LoginDao() {
+	public FollowerDao() {
 		try {
 			connection = connectToDB();
 		} catch (SQLException e) {

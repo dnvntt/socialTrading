@@ -3,7 +3,7 @@ package vn.com.vndirect.socialtrading.api;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import spark.*;
-import vn.com.vndirect.socialtrading.dao.LoginDao;
+import vn.com.vndirect.socialtrading.dao.FollowerDao;
 import vn.com.vndirect.socialtrading.entity.ExecutedOrder;
 import vn.com.vndirect.socialtrading.entity.FollowerEntity;
 import vn.com.vndirect.socialtrading.entity.Following;
@@ -24,12 +24,12 @@ class JsonTransformer implements ResponseTransformer {
 }
 
 
-public class LoginHandler extends AbstractHandler {
-	public LoginHandler() {
-		this(new LoginDao());
+public class FollowerHandler extends AbstractHandler {
+	public FollowerHandler() {
+		this(new FollowerDao());
 	}
 
-	public LoginHandler(final LoginDao loginDao) {
+	public FollowerHandler(final FollowerDao followerDao) {
 		final ObjectMapper mapper = new ObjectMapper();
 
 		// Set this config key so that when the client pushes an object with alien properties,
@@ -55,7 +55,7 @@ public class LoginHandler extends AbstractHandler {
 					throws SQLException, Exception {
 				String user = request.queryParams("user");
 				String password = request.queryParams("pass");
-				FollowerEntity follower = loginDao.authenticate(user, password);
+				FollowerEntity follower = followerDao.authenticate(user, password);
 
 				if (follower == null) {
 					response.status(404);
@@ -83,7 +83,7 @@ public class LoginHandler extends AbstractHandler {
 					Spark.halt(401);
 					return null;
 				} else {
-					FollowerEntity follower = loginDao.get(userId);
+					FollowerEntity follower = followerDao.get(userId);
 					return follower;
 				}
 			}
@@ -102,7 +102,7 @@ public class LoginHandler extends AbstractHandler {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
 				String followerId = request.params(":id");
-				List<PortfolioRow> portfolioRowList = loginDao.getPortfolio(followerId);
+				List<PortfolioRow> portfolioRowList = followerDao.getPortfolio(followerId);
 				return portfolioRowList;
 			}
 		}, new JsonTransformer());
@@ -112,7 +112,7 @@ public class LoginHandler extends AbstractHandler {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
 				String followerId = request.params(":id");
-				List<ExecutedOrder> waitingOrderList = loginDao
+				List<ExecutedOrder> waitingOrderList = followerDao
 						.getSentOrder(followerId);
 				return waitingOrderList;
 			}
@@ -123,7 +123,7 @@ public class LoginHandler extends AbstractHandler {
 			public Object handle(Request request, Response response)
 					throws SQLException, Exception {
 				String followerId = request.params(":id");
-				List<Following> followingList = loginDao.getAccount(followerId);
+				List<Following> followingList = followerDao.getAccount(followerId);
 				return followingList;
 			}
 		}, new JsonTransformer());
@@ -140,7 +140,7 @@ public class LoginHandler extends AbstractHandler {
 							.queryParams("money"));
 					int maxOpen = Integer.parseInt(request.queryParams("maxOpen"));
 
-					loginDao.followTrader(followerId, traderId, moneyAllocate, maxOpen);
+					followerDao.followTrader(followerId, traderId, moneyAllocate, maxOpen);
 					HashMap<String, Object> result = new HashMap<>();
 					result.put("id", followerId);
 					result.put("traderId", traderId);
@@ -163,7 +163,7 @@ public class LoginHandler extends AbstractHandler {
 				String traderId = request.params(":traderId");
 				String followerId = request.params(":id");
 
-				loginDao.unfollowTrader(followerId, traderId);
+				followerDao.unfollowTrader(followerId, traderId);
 
 				return null;
 			}
@@ -177,7 +177,7 @@ public class LoginHandler extends AbstractHandler {
 					Spark.halt(401);
 				}
 
-				FollowerEntity current = loginDao.getFollower(request.params(":id"));
+				FollowerEntity current = followerDao.getFollower(request.params(":id"));
 				FollowerEntity updated = null;
 
 				// TODO: Validation. Null check.
@@ -188,7 +188,7 @@ public class LoginHandler extends AbstractHandler {
 				}
 
 				updated.setId(current.getId());
-				boolean ok = loginDao.save(updated);
+				boolean ok = followerDao.save(updated);
 
 				if (ok) {
 					response.status(200);

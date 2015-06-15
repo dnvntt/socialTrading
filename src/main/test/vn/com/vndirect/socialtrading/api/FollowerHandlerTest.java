@@ -4,19 +4,14 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
-import oracle.jdbc.util.Login;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import spark.Spark;
 import vn.com.vndirect.socialtrading.Config;
-import vn.com.vndirect.socialtrading.dao.LoginDao;
-import vn.com.vndirect.socialtrading.dao.NotFoundException;
+import vn.com.vndirect.socialtrading.dao.FollowerDao;
 import vn.com.vndirect.socialtrading.entity.FollowerEntity;
 import vn.com.vndirect.socialtrading.entity.Following;
 
@@ -26,15 +21,15 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 
-public class LoginHandlerTest {
+public class FollowerHandlerTest {
     String BASE_URL = "http://localhost:4567/api/v1";
-    private LoginDao loginDao;
+    private FollowerDao followerDao;
 
     @Before
     public void setUp() throws Exception {
         Config.loadConfig();
-        loginDao = Mockito.mock(LoginDao.class);
-        new LoginHandler(loginDao);
+        followerDao = Mockito.mock(FollowerDao.class);
+        new FollowerHandler(followerDao);
     }
 
     @After
@@ -58,8 +53,8 @@ public class LoginHandlerTest {
         // Mock a follower
         FollowerEntity follower = new FollowerEntity();
         follower.setId("0001210287");
-        Mockito.when(loginDao.authenticate("vnds", "vnds1234")).thenReturn(follower);
-        Mockito.when(loginDao.get("0001210287")).thenReturn(follower);
+        Mockito.when(followerDao.authenticate("vnds", "vnds1234")).thenReturn(follower);
+        Mockito.when(followerDao.get("0001210287")).thenReturn(follower);
 
         // Then login as that user
         res = login("vnds", "vnds1234");
@@ -81,7 +76,7 @@ public class LoginHandlerTest {
         int maxOpen = 3;
 
         // We are following no one
-        Mockito.when(loginDao.getAccount(followerId)).thenReturn(new ArrayList<Following>());
+        Mockito.when(followerDao.getAccount(followerId)).thenReturn(new ArrayList<Following>());
 
         HttpResponse<JsonNode> res = Unirest.post(BASE_URL + "/follower/{userId}/following")
                 .routeParam("userId", followerId)
@@ -97,7 +92,7 @@ public class LoginHandlerTest {
         assertEquals(traderId, postResultBody.getString("traderId"));
 
         // Verify that the new relationship is saved
-        Mockito.verify(loginDao).followTrader(followerId, traderId, money, maxOpen);
+        Mockito.verify(followerDao).followTrader(followerId, traderId, money, maxOpen);
     }
 
     @Test
@@ -108,7 +103,7 @@ public class LoginHandlerTest {
         followings.add(new Following());
         followings.add(new Following());
         followings.add(new Following());
-        Mockito.when(loginDao.getAccount(userId)).thenReturn(followings);
+        Mockito.when(followerDao.getAccount(userId)).thenReturn(followings);
 
         HttpResponse<JsonNode> res = Unirest.get(BASE_URL + "/follower/{userId}/following")
                 .routeParam("userId", userId)
