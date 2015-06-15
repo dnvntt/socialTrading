@@ -1,79 +1,5 @@
 'use strict';
 
-var Traders = Backbone.Collection.extend({
-    url: "/api/v1/traders",
-
-    comparator: function(item) {
-        return item.get('id');
-    }
-});
-
-var FollowingRels = Backbone.Collection.extend({
-    model: Backbone.Model.extend({
-        idAttribute: "traderId"
-    }),
-});
-
-var Follower = Backbone.Model.extend({
-    defaults: {
-        followingTraders: new FollowingRels()
-    },
-
-    initialize: function() {
-        var _this = this;
-
-        dispatcher.register(function(message) {
-            switch (message.type) {
-                case "ask_to_follow_trader":
-                    $.post("/api/v1/follower/" + _this.id + "/following", {
-                        traderid: message.trader.id,
-                        money: message.allocatedMoney,
-                        maxopen: 3
-                    }).then(function() {
-                        _this.fetch();
-                        traders.fetch();
-                    });
-                    break;
-                case "ask_to_unfollow_trader":
-                    $.ajax({
-                        url: "/api/v1/follower/" + _this.id + "/following/" + message.trader.id,
-                        method: "DELETE",
-                        success: function() {
-                            _this.fetch();
-                            traders.fetch();
-                        }
-                    });
-                    break;
-            }
-        });
-    },
-
-    parse: function(res) {
-        var _this = this;
-        console.log("parsing follower");
-        this.get("followingTraders").url = "/api/v1/follower/" + this.id + "/following";
-        this.get("followingTraders").fetch().then(function() {
-            console.log("followingTraders fetched")
-                _this.get("followingTraders").trigger("change")
-        });
-        return res;
-    },
-
-    isFollowing: function(trader) {
-        return this.get("followingTraders").get(trader.get("id")) !== undefined;
-    }
-});
-
-var dispatcher = new Flux.Dispatcher();
-var traders = new Traders();
-var me = new Follower();
-me.url = "/api/v1/me";
-me.fetch();
-
-dispatcher.register(function(message) {
-    console.log(message);
-});
-
 
 var TraderLine = React.createClass({
     followBtnToggled: function() {
@@ -169,28 +95,44 @@ var TraderList = React.createClass({
 });
 
 var NavBar = React.createClass({
-    logoutBtnClicked: function() {
+    logout: function() {
         $.post("/api/v1/logout").then(function() {
             location.reload();
         }).fail(function() {
             alert("Lỗi. Không thể đăng xuất!");
         });
     },
+
+    showWizardScreen: function() {
+        router.navigate("wizard", {trigger: true});
+    },
+
     render: function() {
+        if (me.get("id")) {
+            var accountControls = (
+                <ul className="nav navbar-nav navbar-right">
+                    <li><button className="btn btn-primary navbar-btn"
+                                onClick={this.showWizardScreen}>
+                            Xin chào, {me.id}!
+                        </button>
+                    </li>
+
+                    <li><button className="btn btn-default navbar-btn" onClick={this.logout}>Logout</button></li>
+                </ul>
+            );
+        }
+
         return (
             <nav className="navbar navbar-default">
               <div className="container-fluid">
                 <div className="navbar-header">
                   <a className="navbar-brand" href="#">
-                    <span className="accent">D</span>uber
+                    <span className="accent">A</span>utotrade
                   </a>
                 </div>
 
                 <div className="collapse navbar-collapse">
-                  <ul className="nav navbar-nav navbar-right">
-                    <li><p className="navbar-text">Hello, {me.id}</p></li>
-                    <li><button className="btn btn-default navbar-btn" onClick={this.logoutBtnClicked}>Logout</button></li>
-                  </ul>
+                    {accountControls}
                 </div>
               </div>
             </nav>
@@ -205,8 +147,9 @@ var App = React.createClass({
             switch(message.type) {
                 case "auth.authenticated":
                     _this.setState({authChecking: false, loggedIn: true});
-                    _this.props.router.navigate("wizard", {trigger: true});
-                    me.fetch();
+                    me.fetch().then(function() {
+                        _this.props.router.navigate("wizard", {trigger: true});
+                    });
             }
         });
 
@@ -306,22 +249,35 @@ var HomeScreen = React.createClass({
     },
 
     render: function() {
+        var styles = {
+            shoutout: {
+                fontFamily: "Verdana",
+                fontStyle: "italic",
+                fontSize: 48,
+                marginBottom: 30,
+            },
+
+            callToAction: {
+                fontSize: 24
+            }
+        };
+
         return (
             <div className="home-container">
 
             <div className="hero">
-                <img src="/img/shoutout.png"/>
+                <h1 style={styles.shoutout}>Dễ hơn chơi lô,<br/> ngon hơn đánh đề!</h1>
 
                 <div className="row">
                     <div className="col-md-8">
                         <p>
-                        Mạng đầu tư <span className="accent">Duber</span> - 
-                        Hệ thống giúp bạn tự động sao chép chiến lược của các nhà đầu tư lãi nhất trên thị trường. 
+                        Mạng đầu tư <span className="accent">Autotrade</span> - 
+                        Hệ thống tự động sao chép chiến lược giao dịch lãi nhất thị trường. 
                         </p>
                     </div>
 
                     <div className="col-md-4">
-                        <button className="btn btn-lg btn-primary" onClick={this.transitToApp}>
+                        <button className="btn btn-lg btn-primary" style={styles.callToAction} onClick={this.transitToApp}>
                         Đầu tư ngay!
                         </button>
                     </div>
@@ -330,22 +286,21 @@ var HomeScreen = React.createClass({
 
             <div className="row features">
                 <div className="col-md-4">
-                    <h3>Tiết kiệm thời gian</h3>
-                    <p>
-                    Chỉ cần đăng ký duy nhất một tài khoản VNDIRECT,
-                    bạn đã trở thành một phần của cộng đồng Duber.
-                    </p>
-                </div>
-                <div className="col-md-4">
                     <h3>Lãi nhất thị trường</h3>
                     <p>
-                    Lựa chọn các nhà đầu tư lãi nhất trên thị trường
-                    và Duber sẽ tự động sao chép các hoạt động đầu tư
-                    của họ vào tài khoản của bạn.
+                    Lựa chọn các chiến lược gia lãi nhất trên thị trường
+                    và Autotrade sẽ tự động sao chép giao dịch của họ
+                    vào tài khoản của bạn.
                     </p>
                 </div>
                 <div className="col-md-4">
-                    <h3>Minh bạch thông tin</h3>
+                    <h3>Không tốn thời gian</h3>
+                    <p>
+                    Trong lúc bạn ngủ tiền tự đẻ ra tiền!
+                    </p>
+                </div>
+                <div className="col-md-4">
+                    <h3>Kết quả tức thời</h3>
                     <p>
                     Quản lý tài khoản dễ dàng, hiển thị minh bạch thông tin
                     đầu tư của bạn và Nhà đầu tư bạn theo dõi.
@@ -359,118 +314,30 @@ var HomeScreen = React.createClass({
 });
 
 
-// FIXME Using global `traders` object
-var TraderCarousel = React.createClass({
-    getInitialState: function() {
-        return {
-            selectedTrader: traders.models[0]
-        }
-    },
-
-    componentDidMount: function() {
-        var thumb = this.refs.thumbSlider.getDOMNode();
-        var detail = this.refs.detailSlider.getDOMNode(); 
-
-        $(thumb).slick({
-            asNavFor: $(detail),
-            slidesToShow: 3,
-            slidesToScroll: 1,
-            centerMode: true,
-            centerPadding: '60px',
-            focusOnSelect: true,
-            nextArrow: this.refs.btnNext.getDOMNode(),
-            prevArrow: this.refs.btnPrev.getDOMNode(),
-        });
-
-        $(detail).slick({
-            asNavFor: $(thumb),
-            slidesToShow: 1,
-            slidesToScroll: 1,
-            arrows: false,
-        });
-
-        var _this = this;
-        $(detail).on("afterChange", function(event, slick, currentSlide) {
-            _this.setState({
-                selectedTrader: traders.models[currentSlide]
-            });
-        });
-    },
-
-    selectedTrader: function() {
-        return this.state.selectedTrader;
-    },
-
-    render: function() {
-        var traderNodes = traders.map(function(trader) {
-            return <TraderLine trader={trader}/>;
-        });
-
-        var styles = {
-            next: {
-                position: 'absolute',
-                right: 0,
-                top: 0,
-                width: 10,
-                height: '100%',
-                backgroundColor: '#AAA'
-            },
-            prev: {
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: 10,
-                height: '100%',
-                backgroundColor: '#AAA'
-            },
-            thumbSlider: {
-                position: 'relative'
-            },
-            detail: {
-                marginBottom: 20
-            }
-        };
-
-        return (
-            <div>
-              <div ref="detailSlider" style={styles.detail}>
-                {traderNodes}
-              </div>
-
-              <div style={styles.thumbSlider}>
-                <div ref="thumbSlider" className="trader-thumb-slider">
-                  <div><img className="img-thumbnail" src="/img/trader1.jpg"/></div>
-                  <div><img className="img-thumbnail" src="/img/trader2.jpg"/></div>
-                  <div><img className="img-thumbnail" src="/img/trader3.jpg"/></div>
-                  <div><img className="img-thumbnail" src="/img/trader1.jpg"/></div>
-                </div>
-
-                <button style={styles.next} ref="btnNext"></button>
-              <button style={styles.prev} ref="btnPrev"></button>
-              </div>
-            </div>
-        );
-    }
-});
 
 var RiskSlider = React.createClass({
     componentDidMount: function() {
         var slider = this.refs.riskSlider.getDOMNode();
+        var _this = this;
+
+        // FIXME: we are calling `me` directly
         $(slider).noUiSlider({
-            start: [ 50 ],
+            start: [ me.get("riskfactor") ],
             step: 10,
             connect: "lower",
             range: {
                 'min': [  0 ],
                 'max': [ 100 ]
             }
-        });
-
-        $(slider).noUiSlider_pips({
+        }).noUiSlider_pips({
             mode: "positions",
             stepped: true,
             values: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
             densitiy: 4
+        }).on("change", function() {
+            if (_this.props.onChange) {
+                _this.props.onChange($(slider).val());
+            }
         });
     },
     render: function() {
@@ -478,77 +345,6 @@ var RiskSlider = React.createClass({
     }
 });
 
-
-var WizardScreen = React.createClass({
-    componentDidMount: function() {
-    },
-
-    btnFinishClicked: function() {
-        var innerRiskSlider = this.refs.riskSlider.refs.riskSlider.getDOMNode();
-        var riskFactor = $(innerRiskSlider).val();
-        var selectedTrader = this.refs.traderSelector.selectedTrader();
-
-        var allocatedMoneyNode = this.refs.allocatedMoney.getDOMNode();
-        if (allocatedMoneyNode.value === "") {
-            var allocatedMoney = allocatedMoneyNode.placeholder;
-        } else {
-            var allocatedMoney = allocatedMoneyNode.value;
-        }
-
-        var value = parseInt(allocatedMoney);
-        if (value === NaN || value < 0) {
-            alert("Số tiền phải là số dương!");
-        }
-
-        // FIXME riskFactor is not used yet
-        // FIXME Handle the error case
-        dispatcher.dispatch({
-            type: "ask_to_follow_trader",
-            trader: selectedTrader,
-            allocatedMoney: allocatedMoney
-        });
-
-        this.props.onCompletion();
-    },
-
-    render: function() {
-        var styles = {
-            slider: {
-                marginBottom: 60
-            }
-        };
-
-        return (
-          <div className="panel panel-default wizard">
-            <div className="panel-heading">
-              <h2 className="panel-title">Cài đặt Tài khoản của bạn</h2>
-            </div>
-
-            <div className="panel-body">
-              <div className="step">
-                <h3>Bước 1: Đặt mức độ rủi ro bạn sẵn sàng chấp nhận</h3>
-                <RiskSlider style={styles.slider} ref="riskSlider"/>
-              </div>
-
-              <div className="step">
-                <h3>Bước 2: Chọn Nhà đầu tư bạn sẽ copy chiến lược</h3>
-                <TraderCarousel traders={traders} ref="traderSelector"/>
-              </div>
-
-              <div className="step">
-                <h3>Bước 3: Chọn số tiền đặt cho Nhà đầu tư bạn vừa chọn</h3>
-                <input type="number" min="1" placeholder="1" ref="allocatedMoney"/> triệu VND
-              </div>
-
-              <div className="button-row clearfix">
-                <button className="btn btn-default">Bỏ qua</button>
-                <button className="btn btn-primary" onClick={this.btnFinishClicked}>Hoàn thành</button>
-              </div>
-                </div>
-            </div>
-        );
-    }
-});
 
 var Router = Backbone.Router.extend({
     routes: {
@@ -567,19 +363,45 @@ var Router = Backbone.Router.extend({
     },
 
     wizard: function() {
+        if (me.get("id") === undefined) {
+            this.navigate("login", {trigger: true});
+            return;
+        }
         this.current = "wizard";
     },
 
     account: function() {
+        if (me.get("id") === undefined) {
+            this.navigate("login", {trigger: true});
+            return;
+        }
         this.current = "account";
     }
 });
 
-router = new Router();
-Backbone.history.start();
-traders.fetch();
+var dispatcher;
+var traders;
+var router;
 
-React.render(
-    <App router={router}/>,
-    document.getElementById('example')
-);
+$(document).ready(function() {
+    dispatcher = new Flux.Dispatcher();
+    traders = new Traders();
+    me = new Follower();
+    me.url = "/api/v1/me";
+
+    dispatcher.register(function(message) {
+        console.log(message);
+    });
+    router = new Router();
+    traders.fetch();
+
+    var afterMeLoaded = function() {
+        React.render(
+                <App router={router}/>,
+                document.getElementById('example')
+        );
+        Backbone.history.start();
+    };
+
+    me.fetch().then(afterMeLoaded).fail(afterMeLoaded);
+});

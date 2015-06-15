@@ -45,7 +45,7 @@ body {
 }
 
 .form-login {
-  margin: 100px auto;
+  margin: 165px auto;
   max-width: 400px;
 }
 
@@ -60,6 +60,8 @@ body {
   border-radius: 0px;
   margin-left: -15px;
   margin-right: -15px;
+  border: none;
+  box-shadow: 0px 3px 11px -8px rgba(0,0,0,0.75);
 }
 
 .navbar-default .navbar-text,
@@ -67,15 +69,29 @@ body {
   color: white;
 }
 
-.navbar-brand {
+.navbar-default .navbar-brand {
   font-size: 40px;
   font-weight: bold;
 }
 
+.navbar-default .navbar-brand:hover,
+.navbar-default .navbar-brand:focus {
+  color: white;
+}
+
+.navbar-right .navbar-btn {
+  margin-left: 10px;
+}
+
+.btn {
+  box-shadow: 0px 3px 11px -8px rgba(0,0,0,0.75);
+}
+
 .btn-primary {
   background-color: #FF9900;
-  color: white;
+  color: #333;
   font-weight: bold;
+  border: none;
 }
 
 .home-container {
@@ -84,11 +100,26 @@ body {
 }
 
 .hero {
+  margin-top: -20px;
   margin-bottom: 20px;
+  margin-left: -59px;
+  margin-right: -59px;
+  padding-top: 80px;
+  padding-bottom: 80px;
+  padding-left: 59px;
+  padding-right: 59px;
+
+  background-image: url("/img/hero-background.jpg");
+  background-position: 0% 100%;
+  color: white;
 }
 
 .hero p {
   font-size: 20px;
+}
+
+.hero p, .hero h1 {
+  text-shadow: 1px 1px 3px #333;
 }
 
 .hero img {
@@ -96,8 +127,12 @@ body {
   margin-bottom: 25px;
 }
 
+.features {
+  margin-bottom: 60px
+}
+
 .features h3 {
-  font-size: 18px;
+  font-size: 18px;;
 }
 
 .features h3::before {
@@ -162,4 +197,9 @@ span.accent {
   padding: 5px 10px;
   font-weight: bold;
   display: inline-block;
+}
+
+.step img {
+  width: 120px;
+  height: auto;
 }

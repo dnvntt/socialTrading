@@ -11,6 +11,19 @@ var AccountScreen = React.createClass({
 
 
 var InfoBox = React.createClass({
+    riskSliderChanged: function(value) {
+        me.set("riskfactor", Math.floor(value));
+        me.save(null, {
+            success: function() {
+                alert("Đã lưu!");
+            },
+            error: function(model, response, options) {
+                alert("Lỗi!");
+                console.log(model, response, options);
+            }
+        });
+    },
+
     render: function() {
         // FIXME Decouple from `me`
         var styles = {
@@ -49,18 +62,18 @@ var InfoBox = React.createClass({
                     <div className="row" style={styles.accountInfoRow}>
                         <div className="col-md-6">
                             <span className="highlight-label" style={styles.label}>NAV</span>
-                            <strong className="text-success">$23123213</strong>
+                            <strong className="text-success">{me.get("cash")} VND</strong>
                         </div>
                         <div className="col-md-6">
-                            <span className="highlight-label" style={styles.label}>Tổng lãi/lỗ</span>
-                            <strong className="text-success">$445</strong>
+                            <span className="highlight-label" style={styles.label}>Tổng lãi / lỗ</span>
+                            <strong className="text-success">1345400 VND</strong>
                         </div>
                     </div>
 
                     <div className="row" style={styles.accountInfoRow}>
                         <div className="col-md-12">
                             <h4>Mức độ rủi ro:</h4>
-                            <RiskSlider ref="riskSlider" style={styles.riskSlider}/>
+                            <RiskSlider ref="riskSlider" onChange={this.riskSliderChanged} style={styles.riskSlider}/>
                         </div>
                     </div>
                 </div>
@@ -72,6 +85,19 @@ var InfoBox = React.createClass({
 
 
 var StockList = React.createClass({
+    componentDidMount: function() {
+        var _this = this;
+        var socket = new WebSocket("ws://localhost:8090/stocks");
+        socket.onopen = function(event) {
+            console.log("websocket connected");
+        }
+        socket.onmessage = this.newMessage;
+    },
+
+    newMessage: function() {
+        console.log("new message");
+    },
+
     render: function() {
         return (
             <div className="panel panel-default">
@@ -80,7 +106,55 @@ var StockList = React.createClass({
                 </div>
 
                 <div className="panel-body">
-                    <p>Hiện tại quý khách chưa có lệnh đặt nào.</p>
+                    <table className="table table-striped table-hover">
+                      <tr>
+                        <th>Mã CK</th>
+                        <th>Số lượng</th>
+                        <th>Giá vốn</th>
+                        <th>Giá hiện tại</th>
+                        <th>%</th>
+                      </tr>
+
+                      <tr>
+                        <td>FLC</td>
+                        <td>100.000</td>
+                        <td>11,800</td>
+                        <td>23,600</td>
+                        <td><span className="text-success">100%</span></td>
+                      </tr>
+
+                      <tr>
+                        <td>VND</td>
+                        <td>240.000</td>
+                        <td>6,000</td>
+                        <td>66,000</td>
+                        <td><span className="text-success">1100%</span></td>
+                      </tr>
+
+                      <tr>
+                        <td>SSI</td>
+                        <td>3.000</td>
+                        <td>40,000</td>
+                        <td>8,000</td>
+                        <td><span className="text-danger">-80%</span></td>
+                      </tr>
+
+                      <tr>
+                        <td>AGM</td>
+                        <td>3.000</td>
+                        <td>8,000</td>
+                        <td>12,000</td>
+                        <td><span className="text-success">50%</span></td>
+                      </tr>
+
+                      <tr>
+                        <td>CMT</td>
+                        <td>3.000</td>
+                        <td>12,000</td>
+                        <td>24,000</td>
+                        <td><span className="text-success">100%</span></td>
+                      </tr>
+                    </table>
                 </div>
             </div>
         );
