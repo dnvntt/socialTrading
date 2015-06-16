@@ -1,65 +1,61 @@
-﻿begin;
+﻿-- -*- indent-tabs-mode: t
 
+begin;
+
+-- Since this is a test db script, drop everything then recreate our schema.
 drop schema public cascade;
 create schema public;
 
 
 CREATE TABLE account (
-	id text PRIMARY KEY,
-	risk_factor integer NOT NULL,
+	accountNumber text PRIMARY KEY,    -- VNDIRECT's internal account number
 	username text NOT NULL,
 	password text NOT NULL,
 	name text NOT NULL,
-	cash numeric(19,2) NOT NULL
+	investment numeric(19, 2) NOT NULL, -- The total money put into this account
+	cash numeric(19,2) NOT NULL,        -- The cash on hand
+	type char                           -- The account type 0: FOLLOWER | 1: TRADER
 );
 
-CREATE TABLE trader (
-	traderid text PRIMARY KEY,
-	username text NOT NULL,
-	password text NOT NULL,
-	numberfollow integer,
-	name text,
-	monneyfollow numeric(19,2),
-	cash numeric(19,2)
+CREATE TABLE followerInfo (
+	accountNumber text PRIMARY KEY REFERENCES account (accountNumber),
+	riskFactor integer NOT NULL
 );
+
+CREATE TABLE traderInfo (
+	accountNumber text PRIMARY KEY REFERENCES account (accountNumber),
+	totalAllocatedMoney numeric(19,2) NOT NULL,
+	peopleFollowing integer NOT NULL
+);
+
+
+CREATE TABLE cashFlow (
+	accountNumber text NOT NULL,
+	amount numeric(19, 2) NOT NULL,
+	date timestamp with time zone NOT NULL
+);
+
 
 CREATE TABLE following (
-	id text NOT NULL,
-	traderid text NOT NULL,
-	moneyallocate numeric(19,2) NOT NULL,
-	maxopen integer NOT NULL,
-	transactionid text NOT NULL,
-	PRIMARY KEY (id, traderid),
-	FOREIGN KEY (id) REFERENCES account (id),
-	FOREIGN KEY (traderid) REFERENCES trader (traderid)
-);
-
-
-CREATE TABLE history (
-	id text PRIMARY KEY,
-	orderid text NOT NULL,
-	traderid text NOT NULL,
-	date timestamp without time zone NOT NULL
+	followerAccount text NOT NULL REFERENCES account (accountNumber),
+	traderAccount text NOT NULL REFERENCES account (accountNumber),
+	allocatedMoney numeric(19,2) NOT NULL,
+	PRIMARY KEY (followerAccount, traderAccount)
 );
 
 
 CREATE TABLE orderlist (
-	orderid text PRIMARY KEY,
+	orderId text PRIMARY KEY,
+	followerAccount text NOT NULL,
+	traderAccount text NOT NULL,
 	stock text NOT NULL,
 	quantity integer NOT NULL,
-	price integer NOT NULL,
-	date timestamp without time zone NOT NULL,
+	price numeric(19, 2) NOT NULL,
+	date timestamp with time zone NOT NULL,
 	side integer NOT NULL,
-	type text NOT NULL
-);
-
-
-CREATE TABLE portfolio (
-	id text NOT NULL,
-	stock text NOT NULL,
-	quantity integer NOT NULL,
-	cost integer NOT NULL,
-	PRIMARY KEY (id, stock)
+	type text NOT NULL,
+	matchPrice numeric(19,2),   -- These two can be NULL,
+	matchQuantityrade integer   -- meaning this order has not been matched yet.
 );
 
 
@@ -71,33 +67,50 @@ CREATE TABLE stockrisk (
 );
 
 
-CREATE TABLE transaction (
-	transactionid text NOT NULL,
-	orderid text NOT NULL,
-	PRIMARY KEY (transactionid, orderid)
+-- The stocks that an account is holding
+CREATE TABLE position (
+	accountNumber text NOT NULL,
+	mimickingAccountNumber text,    -- If this position is held by a trader then this field is NULL
+	stock text NOT NULL,
+	quantity integer NOT NULL,
+	cost numeric(19,2) NOT NULL,
+	PRIMARY KEY (accountNumber, stock),
+	FOREIGN KEY (accountNumber, mimickingAccountNumber) REFERENCES following (followerAccount, traderAccount)
 );
 
 
-INSERT INTO account (risk_factor, id, username, password, name, cash) VALUES
-	(68, '0001210254', 'khanh', '123456', 'Do Quoc Huy', 445000000.00),
-	(88, '0001210287', 'vnds', 'vnds1234', 'Tran Xuan Anh', 9474270200.00);
+-- Snapshots of an account's financial parameters at different points in time.
+-- Used mostly to make charts.
+CREATE TABLE performance (
+	accountNumber text NOT NULL REFERENCES account (accountNumber),
+	equity numeric(19, 2) NOT NULL,
+	profit numeric(19, 2) NOT NULL,
+	date timestamp with time zone NOT NULL
+);
 
 
-INSERT INTO trader (traderid, username, password, numberfollow, name, monneyfollow, cash) VALUES
-	('0001041716',  'thutrang', '123456', 0, 'Tran Thu Trang', 0.00, 345000000.00),
-	('0001052458',  'TrungTran', '123456', 0, 'Nguyen Manh Hung', 0.00, 134000000.00),
-	('0001011079',  'Hero99', '123456', 1, 'Vu Xuan Kien', 250000000.00, 4972860400.00),
-	('0001029605',  'tatthang', 'xuz123', 1, 'Le tat Thang', 60000000.00, 67800000.00);
+--
+-- Initial test data
+--
 
 
-INSERT INTO following (id, traderid, moneyallocate, maxopen, transactionid) VALUES
-	('0001210287', '0001011079', 213.00, 3, '0001210287_0001011079');
+INSERT INTO account (accountNumber, username, password, name, investment, cash, type) VALUES
+       ('0001210254', 'user1', 'user1', 'Đỗ Quốc Huy', 10000, 10000, 0),
+       ('0001210287', 'user2', 'user2', 'Trần Xuân Anh', 15000, 15000, 0),
+       ('0001041716', 'user3', 'user3', 'aeoaeo', 23424, 45, 1),
+       ('0001052458', 'user4', 'user4', 'iiii', 2432, 5656, 1),
+       ('0001011079', 'user5', 'user5', 'uuu', 34568, 4544, 1),
+       ('0001029605', 'user6', 'user6', 'thtnhh', 9884, 323, 1);
+
+INSERT INTO followerInfo (accountNumber, riskFactor) VALUES
+       ('0001210254', 60),
+       ('0001210287', 40);
+
+INSERT INTO position VALUES
+       ('0001052458', NULL, 'FPT', 100, 3434);
 
 
-INSERT INTO portfolio (id, stock, quantity, cost) VALUES
-	('0001011079', 'POT', 50000, 13800),
-	('0001011079', 'VND', 300, 13800);
-
+select * from position;
 
 INSERT INTO stockrisk (stock, risk, name, floor) VALUES
 	('FPT', 30, 'Tập đoàn FPT', 10),
@@ -115,8 +128,8 @@ INSERT INTO stockrisk (stock, risk, name, floor) VALUES
 	('SHB', 40, 'Ngân hàng SHB', 02),
 	('POT', 30, 'CTCP thiết bị bưu điện', 02),
 	('HQC', 20, 'Địa ốc Hoàng Quân', 10),
-	('VHG', 20,  'Cao su Quảng Nam   ', 10),
-	('PSD', 30,  'CT dịch vụ dầu khí ', 02),
+	('VHG', 20, 'Cao su Quảng Nam', 10),
+	('PSD', 30, 'CT dịch vụ dầu khí', 02),
 	('PMC', 30, 'Dược phẩm Pharmedic', 02);
 
 commit;
