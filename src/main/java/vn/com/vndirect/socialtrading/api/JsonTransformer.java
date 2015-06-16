@@ -8,6 +8,9 @@ class JsonTransformer implements ResponseTransformer {
 
 	@Override
 	public String render(Object model) throws Exception {
+		if (model == null) {
+			return "{}";
+		}
 		return mapper.writeValueAsString(model);
 	}
 }
