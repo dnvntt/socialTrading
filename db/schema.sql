@@ -93,13 +93,13 @@ CREATE TABLE performance (
 --
 
 
-INSERT INTO account (accountNumber, username, password, name, investment, cash, type) VALUES
-       ('0001210254', 'user1', 'user1', 'Đỗ Quốc Huy', 10000, 10000, 0),
-       ('0001210287', 'user2', 'user2', 'Trần Xuân Anh', 15000, 15000, 0),
-       ('0001041716', 'user3', 'user3', 'aeoaeo', 23424, 45, 1),
-       ('0001052458', 'user4', 'user4', 'iiii', 2432, 5656, 1),
-       ('0001011079', 'user5', 'user5', 'uuu', 34568, 4544, 1),
-       ('0001029605', 'user6', 'user6', 'thtnhh', 9884, 323, 1);
+INSERT INTO account (accountNumber, username, password, name, cash, type) VALUES
+       ('0001210254', 'user1', 'user1', 'Đỗ Quốc Huy', 10000, 0),
+       ('0001210287', 'user2', 'user2', 'Trần Xuân Anh', 15000, 0),
+       ('0001041716', 'user3', 'user3', 'aeoaeo', 45, 1),
+       ('0001052458', 'user4', 'user4', 'iiii', 5656, 1),
+       ('0001011079', 'user5', 'user5', 'uuu', 4544, 1),
+       ('0001029605', 'user6', 'user6', 'thtnhh', 323, 1);
 
 INSERT INTO followerInfo (accountNumber, riskFactor) VALUES
        ('0001210254', 60),
