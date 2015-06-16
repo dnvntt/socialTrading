@@ -12,7 +12,6 @@ CREATE TABLE account (
 	username text NOT NULL,
 	password text NOT NULL,
 	name text NOT NULL,
-	investment numeric(19, 2) NOT NULL, -- The total money put into this account
 	cash numeric(19,2) NOT NULL,        -- The cash on hand
 	type char                           -- The account type 0: FOLLOWER | 1: TRADER
 );
@@ -55,7 +54,7 @@ CREATE TABLE orderlist (
 	side integer NOT NULL,
 	type text NOT NULL,
 	matchPrice numeric(19,2),   -- These two can be NULL,
-	matchQuantityrade integer   -- meaning this order has not been matched yet.
+	matchQuantity integer   -- meaning this order has not been matched yet.
 );
 
 
