@@ -30,6 +30,7 @@ public class FollowerHandlerTest {
         Config.loadConfig();
         followerDao = Mockito.mock(FollowerDao.class);
         new FollowerHandler(followerDao);
+        new ApiHandler(followerDao);
     }
 
     @After

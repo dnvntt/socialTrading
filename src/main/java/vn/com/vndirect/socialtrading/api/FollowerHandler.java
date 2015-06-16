@@ -40,50 +40,10 @@ public class FollowerHandler extends AbstractHandler {
 //			}
 //		});
 
-		Spark.post(PREFIX + "/login", new Route() {
-			public Object handle(Request request, Response response)
-					throws SQLException, Exception {
-				String user = request.queryParams("user");
-				String password = request.queryParams("pass");
-				FollowerEntity follower = followerDao.authenticate(user, password);
-
-				if (follower == null) {
-					response.status(404);
-					return null;
-				} else {
-					Session session = request.session(true);
-					session.attribute("id", follower.getId());
-					response.status(200);
-					return follower;
-				}
-			}
-		}, new JsonTransformer());
-
-		Spark.post(PREFIX + "/logout", new Route() {
-			public Object handle(Request request, Response response) throws Exception {
-				request.session().invalidate();
-				return null;
-			}
-		}, new JsonTransformer());
-
-		Spark.get(PREFIX + "/me", new Route() {
-			public Object handle(Request request, Response response) throws Exception {
-				String userId = (String) request.session().attribute("id");
-				if (userId == null) {
-					Spark.halt(401);
-					return null;
-				} else {
-					FollowerEntity follower = followerDao.get(userId);
-					return follower;
-				}
-			}
-		}, new JsonTransformer());
-
-		Spark.put(PREFIX + "/me", new Route() {
+		Spark.get(PREFIX + "/follower/:id", new Route() {
 			@Override
 			public Object handle(Request request, Response response) throws Exception {
-				response.redirect(PREFIX + "/follower/" + request.session().attribute("id"));
-				return null;
+				return followerDao.get(request.params("id"));
 			}
 		}, new JsonTransformer());
 
@@ -189,5 +149,28 @@ public class FollowerHandler extends AbstractHandler {
 			}
 		}, new JsonTransformer());
 
+		Spark.get(PREFIX + "/me", new Route() {
+			public Object handle(Request request, Response response) throws Exception {
+				sessionMustHaveUserId(request.session());
+				response.redirect(PREFIX + "/follower/" + request.session().attribute("id"));
+				return null;
+			}
+		}, new JsonTransformer());
+
+		Spark.put(PREFIX + "/me", new Route() {
+			@Override
+			public Object handle(Request request, Response response) throws Exception {
+				sessionMustHaveUserId(request.session());
+				response.redirect(PREFIX + "/follower/" + request.session().attribute("id"));
+				return null;
+			}
+		}, new JsonTransformer());
+	}
+
+	void sessionMustHaveUserId(Session session) {
+		String userId = session.attribute("id");
+		if (userId == null) {
+			Spark.halt(401);
+		}
 	}
 }
